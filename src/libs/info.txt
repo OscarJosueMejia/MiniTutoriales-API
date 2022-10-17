@@ -1,0 +1,2 @@
+Dentro de este paquete, se almacenarán toda la lógica en la programacion a partir de dominios
+o trabajar bajo entidades. 
