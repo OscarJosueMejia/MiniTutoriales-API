@@ -1,0 +1,11 @@
+// The current database to use.
+use('mini-tutos');
+
+db.Tutorial.aggregate([{
+    $lookup:{
+        from:'User',
+        localField:'authorId',
+        foreignField:'_id',
+        as:'autor_info'
+    }
+}])

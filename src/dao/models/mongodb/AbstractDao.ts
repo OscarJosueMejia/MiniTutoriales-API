@@ -58,6 +58,16 @@ export abstract class AbstractDao<T> implements IDaoObject {
     return this.collection.updateOne({ _id }, data);
   }
 
+  public async updateByFilter(
+    filter: {},
+    data: unknown,
+  ): Promise<UpdateResult> {
+    return this.collection.updateOne(filter, 
+      {
+        $set:data
+      }as unknown as UpdateFilter<T>);
+  }
+
   public async delete(identifier: string): Promise<DeleteResult> {
     const _id = new ObjectId(identifier) as Filter<T>;
     return this.collection.deleteOne({ _id });
