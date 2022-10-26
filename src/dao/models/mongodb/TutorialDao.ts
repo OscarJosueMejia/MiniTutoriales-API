@@ -2,7 +2,14 @@ import { ITutorial, ITutorialComment } from "../entities/Tutorial";
 import { AbstractDao } from "./AbstractDao";
 import { Db, ObjectId } from "mongodb";
 
-
+const authorInfoRelation:{} = {
+    $lookup: { 
+        from: "User",
+        localField: "authorId",
+        foreignField: "_id",
+        as: "author_info"
+     },
+}
 
 export class TutorialDao extends AbstractDao<ITutorial>{
     public constructor(db:Db) {
@@ -18,22 +25,44 @@ export class TutorialDao extends AbstractDao<ITutorial>{
         }
     }
 
+    public async getTutorialsForUser(identifier:string){
+        try {
+            return super.aggregate(
+                [{$addFields: {
+                        userLiked:{
+                            $cond:{
+                                if: {$in:[identifier,"$reactionsCount.reaction_IsUtil"]},
+                                then: true,
+                                else: false
+                            }
+                        },
+                        userDisliked:{
+                            $cond:{
+                                if: {$in:[identifier,"$reactionsCount.reaction_Dislike"]},
+                                then: true,
+                                else: false
+                            }
+                        }
+                    },
+                },
+                authorInfoRelation],{}
+            );
+
+        } catch (ex:unknown) {
+            console.log("TutorialDao mongodb:", (ex as Error).message);
+            throw ex;
+        }
+    }
     /**
      * @param identifier 
      * @description Retorna los detalles de un tutorial.
      * @returns array<ITutorial>
      */
-    public async getTutorialById(_identifier:string){
+    public async getTutorialById(identifier:string){
         try {
-            // const result1 = super.getCollection().aggregate([{
-            //     $lookup:{
-            //         from:'User',
-            //         localField:'authorId',
-            //         foreignField:'_id',
-            //         as:'autor_info'
-            //     }
-            // }])
-            // return await super.findByFilter(identifier);;
+            return super.aggregate(
+                [{$match:{_id:new ObjectId(identifier)}},
+                authorInfoRelation],{});
         } catch (ex:unknown) {
             console.log("TutorialDao mongodb:", (ex as Error).message);
             throw ex;
@@ -62,9 +91,9 @@ export class TutorialDao extends AbstractDao<ITutorial>{
      */
     public async insertNewTutorial(newTutorial: ITutorial) {
         try {
-            const {_id, ...newObject} = newTutorial;
+            const {_id, authorId, ...newObject} = newTutorial;
             // const result = await super.updateRaw(userIdentifier, {"$push":{ "tutorials":{...{_id: new ObjectId()},...newObject}}});
-            const result = await super.createOne(newObject);
+            const result = await super.createOne({...{authorId:new ObjectId(authorId as string)}, ...newObject});
             return result;
         } catch (ex:unknown) {
             console.log("TutorialDao mongodb:", (ex as Error).message);

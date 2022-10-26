@@ -18,6 +18,10 @@ export class Tutorial {
         return this.dao.getTutorials();
     }
 
+    public getTutorialsForUser(identifier:string){
+        return this.dao.getTutorialsForUser(identifier);
+    }
+    
     public getTutorialById(identifier:string){
         return this.dao.getTutorialById(identifier);
     }
@@ -35,6 +39,7 @@ export class Tutorial {
                 description,
                 requirements,
                 steps,
+                reactionsCount:{reaction_IsUtil:[], reaction_Dislike:[]},
                 tags,
                 createdAt: new Date(createdAt)
             }

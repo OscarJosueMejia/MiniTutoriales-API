@@ -28,6 +28,18 @@ router.get('/all', async (_req, res)=>{
   }
 });
 
+router.get('/logged_user/:userId', async (req, res)=>{
+  try {
+    const {userId} = req.params;
+    const tutorialsList = await tutorialInstance.getTutorialsForUser(userId);
+    res.json(tutorialsList);
+
+  } catch (ex) {
+    console.error(ex);
+    res.status(503).json({error:ex});
+  }
+});
+
 router.get('/list/:userId', async (req, res)=>{
   try {
     const { userId } = req.params;
