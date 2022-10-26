@@ -1,6 +1,6 @@
 import { getConnection as getMongoDBConn } from "@models/mongodb/MongoDBConn";
 import { TutorialDao as TutorialDaoMongoDB} from "@models/mongodb/TutorialDao";
-import { ITutorial } from "@models/entities/Tutorial";
+import { ITutorial, ITutorialComment } from "@models/entities/Tutorial";
 
 export class Tutorial {
     private dao: TutorialDaoMongoDB;
@@ -14,12 +14,16 @@ export class Tutorial {
         .catch(ex=>console.error(ex));
     }
 
+    public getTutorials(){
+        return this.dao.getTutorials();
+    }
+
     public getTutorialById(identifier:string){
         return this.dao.getTutorialById(identifier);
     }
 
-    public getTutorialsByUser(index:string){
-        return this.dao.getTutorialsByUser(index);
+    public getTutorialsByUser(identifier:string){
+        return this.dao.getTutorialsByUser(identifier);
     }
 
     public addTutorial(authorId:string, newTutorial: Partial<ITutorial>) {
@@ -32,7 +36,6 @@ export class Tutorial {
                 requirements,
                 steps,
                 tags,
-                reactionsCount:{reaction1:0, reaction2:0},
                 createdAt: new Date(createdAt)
             }
         );
@@ -52,5 +55,17 @@ export class Tutorial {
                 tags,
             }
         );
+      }
+
+    public addComment(tutorialId: string,  newComment : ITutorialComment) {
+        return this.dao.addComment(tutorialId, newComment);
+    }
+
+    public removeComment(tutorialId: string,  commentId : string) {
+        return this.dao.deleteComment(tutorialId, {_id:commentId});
+    }
+
+    public reactionHandler(tutorialId: string,  reactionInfo: {reactionName:"LIKE"|"DISLIKE", userId: string, mode: "ADD"|"REMOVE"}) {
+        return this.dao.reactionHandler(tutorialId, reactionInfo);
       }
 }

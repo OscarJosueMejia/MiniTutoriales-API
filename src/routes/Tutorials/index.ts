@@ -1,6 +1,6 @@
 import {Router} from 'express';
 import { Tutorial } from '@libs/Tutorial';
-import { ITutorial } from '@models/entities/Tutorial';
+import { ITutorial, ITutorialComment } from '@models/entities/Tutorial';
 // import { commonValidator, validateInput } from '@server/utils/validator';
 const router = Router();
 const tutorialInstance = new Tutorial("MONGODB");
@@ -10,6 +10,17 @@ router.get('/one/:id', async (req, res)=>{
     const { id } = req.params;
     const tutorialDetails = await tutorialInstance.getTutorialById(id);
     res.json(tutorialDetails);
+
+  } catch (ex) {
+    console.error(ex);
+    res.status(503).json({error:ex});
+  }
+});
+
+router.get('/all', async (_req, res)=>{
+  try {
+    const tutorialsList = await tutorialInstance.getTutorials();
+    res.json(tutorialsList);
 
   } catch (ex) {
     console.error(ex);
@@ -56,6 +67,49 @@ router.put('/update/:id', async (req, res)=>{
     const updateTutorial = req.body as unknown as ITutorial;
       await tutorialInstance.updateTutorial({...{_id:id}, ...updateTutorial});
       res.status(200).json({"msg":"Registro Actualizado."});
+
+  } catch (error) {
+    res.status(500).json({error: (error as Error).message});
+  }
+});
+
+router.put('/comment/:id', async (req, res)=>{
+  try {
+    const { id } = req.params;
+    const commentBody = req.body as unknown as ITutorialComment;
+      
+    await tutorialInstance.addComment(id, commentBody);
+      res.status(200).json({"msg":"Comentario Agregado.", commentBody});
+
+  } catch (error) {
+    res.status(500).json({error: (error as Error).message});
+  }
+});
+
+router.put('/comment/remove/:id/:commentId', async (req, res)=>{
+  try {
+    const { id, commentId } = req.params;
+      
+    await tutorialInstance.removeComment(id, commentId);
+      res.status(200).json({"msg":"Comentario Eliminado."});
+
+  } catch (error) {
+    res.status(500).json({error: (error as Error).message});
+  }
+});
+
+router.put('/reaction/:id', async (req, res)=>{
+  try {
+    const { id } = req.params;
+    const reactionInfo = req.body as unknown as {reactionName:"LIKE"|"DISLIKE", userId: string, mode: "ADD"|"REMOVE"};
+    
+    const result = await tutorialInstance.reactionHandler(id, reactionInfo);
+    
+    if (!result) {
+      res.status(406).json({"error":"Interaction Already Registered or Nothing to remove."});
+    }else{
+      res.status(200).json({"msg":"Interacción Registrada."});
+    }
 
   } catch (error) {
     res.status(500).json({error: (error as Error).message});

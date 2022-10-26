@@ -1,12 +1,21 @@
-import { ITutorial } from "../entities/Tutorial";
+import { ITutorial, ITutorialComment } from "../entities/Tutorial";
 import { AbstractDao } from "./AbstractDao";
-import { Db } from "mongodb";
+import { Db, ObjectId } from "mongodb";
 
 
 
 export class TutorialDao extends AbstractDao<ITutorial>{
     public constructor(db:Db) {
         super('Tutorial', db);
+    }
+
+    public async getTutorials(){
+        try {
+            return await super.findAll();
+        } catch (ex:unknown) {
+            console.log("TutorialDao mongodb:", (ex as Error).message);
+            throw ex;
+        }
     }
 
     /**
@@ -16,16 +25,15 @@ export class TutorialDao extends AbstractDao<ITutorial>{
      */
     public async getTutorialById(_identifier:string){
         try {
-            const result1 = super.getCollection().aggregate([{
-                $lookup:{
-                    from:'User',
-                    localField:'authorId',
-                    foreignField:'_id',
-                    as:'autor_info'
-                }
-            }])
-            // const result = await super.findByID(identifier);
-            return result1;
+            // const result1 = super.getCollection().aggregate([{
+            //     $lookup:{
+            //         from:'User',
+            //         localField:'authorId',
+            //         foreignField:'_id',
+            //         as:'autor_info'
+            //     }
+            // }])
+            // return await super.findByFilter(identifier);;
         } catch (ex:unknown) {
             console.log("TutorialDao mongodb:", (ex as Error).message);
             throw ex;
@@ -39,7 +47,7 @@ export class TutorialDao extends AbstractDao<ITutorial>{
      */
     public async getTutorialsByUser(identifier:string){
         try {
-            const result = await super.findByFilter({authorId:identifier});
+            const result = await super.findByFilter({authorId: new ObjectId(identifier)});
             return result;
         } catch (ex:unknown) {
             console.log("TutorialDao mongodb:", (ex as Error).message);
@@ -69,6 +77,77 @@ export class TutorialDao extends AbstractDao<ITutorial>{
             const {_id, ...updateObject} = updateTutorial;
             const result = await super.update(_id as string, updateObject);
             return result;
+
+        } catch (ex:unknown) {
+            console.log("TutorialDao mongodb:", (ex as Error).message);
+            throw ex;
+        }
+    }
+
+    public async addComment( tutorialId: string, newComment: ITutorialComment){
+        try {
+            const {userId, ...commentBody} = newComment;
+            const result = await super.updateRaw(tutorialId as string, {"$push":{ "comments": 
+            {...{
+                    _id: new ObjectId(), 
+                    userId: new ObjectId(userId as string)
+                }, 
+            ...commentBody}}});
+            return result;
+        } catch (ex:unknown) {
+            console.log("TutorialDao mongodb:", (ex as Error).message);
+            throw ex;
+        }
+    }
+
+    public async deleteComment(tutorialId:string, commentId: Partial<ITutorialComment>, ){
+        try {
+            const {_id} = commentId;
+            return await super.updateRaw(tutorialId as string, {"$pull":{'comments': {'_id': new ObjectId(_id as string)}}});
+        
+        } catch (ex:unknown) {
+            console.log("TutorialDao mongodb:", (ex as Error).message);
+            throw ex;
+        }
+    }
+
+    public async reactionHandler( tutorialId: string, reactionInfo: {reactionName:"LIKE"|"DISLIKE", userId: string, mode: "ADD"|"REMOVE"}){
+        try {
+            const {reactionName, userId, mode} = reactionInfo;
+            let registeredFilter: {};
+            let updateFilter: {};
+
+            switch (reactionName){
+                case "LIKE":
+                    registeredFilter = {'reactionsCount.reaction_IsUtil': {$in: [userId]}};
+                    updateFilter = { "reactionsCount.reaction_IsUtil": userId};
+                    break;
+                case "DISLIKE":
+                    registeredFilter = {'reactionsCount.reaction_Dislike': {$in: [userId]}};
+                    updateFilter = { "reactionsCount.reaction_Dislike": userId};
+                    break;
+            }
+
+            const checkRegistered = await super.findByFilter({$and:
+                [{'_id': new ObjectId(tutorialId)},
+                  registeredFilter]});
+
+            switch (mode) {
+                case "ADD":
+                    if (checkRegistered.length === 0) {
+                        return await super.updateRaw(tutorialId as string, {"$push":updateFilter})
+                    }else{
+                        console.log("Interaction Already Registered");
+                        return false;
+                    }
+                case "REMOVE":
+                    if (checkRegistered.length > 0) {
+                        return await super.updateRaw(tutorialId as string, {"$pull":updateFilter})
+                    }else{
+                        console.log("No Interaction to Remove");
+                        return false;
+                    }
+            }
 
         } catch (ex:unknown) {
             console.log("TutorialDao mongodb:", (ex as Error).message);

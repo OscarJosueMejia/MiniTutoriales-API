@@ -9,16 +9,19 @@ export interface ITutorial {
         description: string,
         imgURL:string
     }>;
-    reactionsCount: {
-        reaction1: 0,
-        reaction2: 0
+    reactionsCount?: {
+        reaction_IsUtil: Array<string>, 
+        reaction_Dislike: Array<string>
     };
-    comments?: Array<{
-        id: number, 
-        text:string
-    }>;
+    comments?: Array<ITutorialComment>;
     tags: Array<{ 
         tagDescription:string
     }>;
     createdAt:Date;
+}
+
+export interface ITutorialComment{
+    _id?: unknown,
+    userId: unknown, 
+    text: string
 }
