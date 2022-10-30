@@ -76,4 +76,20 @@ export class TutorialDao extends AbstractDao<ITutorial>{
         }
     }
 
+    /**
+     * @param deleteTutorial 
+     * @description Elimina un mini tutorial por id
+     * @returns boolean
+     */
+    public async deleteTutorial(index: string) {
+        try {
+            // const result = await super.updateRaw(userIdentifier, {"$push":{ "tutorials":{...{_id: new ObjectId()},...newObject}}});
+            const result = await super.delete(index);
+            return result;
+        } catch (ex:unknown) {
+            console.log("TutorialDao mongodb:", (ex as Error).message);
+            throw ex;
+        }
+    }
+
 }

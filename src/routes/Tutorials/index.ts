@@ -20,6 +20,7 @@ router.get('/one/:id', async (req, res)=>{
 router.get('/list/:userId', async (req, res)=>{
   try {
     const { userId } = req.params;
+    console.log(userId);
     const tutorialList = await tutorialInstance.getTutorialsByUser(userId);
     res.json(tutorialList);
 
@@ -52,11 +53,26 @@ router.put('/add/:userId', async (req, res)=>{
 router.put('/update/:id', async (req, res)=>{
   try {
     const { id } = req.params;
+    const { steps, tags, ...updateTutorial } = req.body as unknown as ITutorial;
     
-    const updateTutorial = req.body as unknown as ITutorial;
+    if (steps.length > 0 && tags.length > 0) {
       await tutorialInstance.updateTutorial({...{_id:id}, ...updateTutorial});
       res.status(200).json({"msg":"Registro Actualizado."});
+    }
+    else{
+      res.status(500).json({error: "'Steps' and 'Tags' length must be greater than 0"});
+    }
 
+  } catch (error) {
+    res.status(500).json({error: (error as Error).message});
+  }
+});
+
+router.delete('/delete/:id', async(req, res)=>{
+  try {
+    const { id } = req.params; 
+    await tutorialInstance.deleteTutorial(id as string);
+    res.status(200).json({"msg": "Minitutorial Eliminado"})
   } catch (error) {
     res.status(500).json({error: (error as Error).message});
   }

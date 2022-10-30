@@ -53,4 +53,11 @@ export class Tutorial {
             }
         );
       }
+    
+    /**
+     * deleteTutorial
+     */
+    public deleteTutorial(index: string) {
+        return this.dao.deleteTutorial(index as string);
+    }
 }
