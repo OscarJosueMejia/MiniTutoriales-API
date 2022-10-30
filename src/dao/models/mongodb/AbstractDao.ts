@@ -59,7 +59,7 @@ export abstract class AbstractDao<T> implements IDaoObject {
   }
 
   public async updateByFilter(
-    filter: {},
+    filter: Filter<T>,
     data: unknown,
   ): Promise<UpdateResult> {
     return this.collection.updateOne(filter, 
