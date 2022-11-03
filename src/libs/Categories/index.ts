@@ -77,6 +77,15 @@ export class Categories{
         })
     }
 
+    /**
+     * @params categoryId
+     * getTutorialsByCategory
+     * @returns
+     */
+     public getTutorialsByCategory(categoryId:string) {
+        return this.dao.getTutorialsByCategory(categoryId);
+    }
+
 }
 
 

@@ -31,10 +31,11 @@ export class Tutorial {
     }
 
     public addTutorial(authorId:string, newTutorial: Partial<ITutorial>) {
-        const {title, description, requirements, steps, tags, createdAt} = newTutorial;
+        const {categoryId, title, description, requirements, steps, tags, createdAt} = newTutorial;
         return this.dao.insertNewTutorial(
             {
                 authorId,
+                categoryId,
                 title,
                 description,
                 requirements,
@@ -47,11 +48,12 @@ export class Tutorial {
       }
 
     public updateTutorial(updateTutorial: Partial<ITutorial>) {
-        const {_id, authorId, title, description, requirements, steps, tags, reactionsCount} = updateTutorial;
+        const {_id, authorId, categoryId, title, description, requirements, steps, tags, reactionsCount} = updateTutorial;
         return this.dao.updateTutorial(
             {
                 _id,
                 authorId,
+                categoryId,
                 title,
                 description,
                 requirements,

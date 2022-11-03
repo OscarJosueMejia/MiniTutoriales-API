@@ -53,19 +53,24 @@ router.get('/list/:userId', async (req, res)=>{
   }
 });
 
-router.put('/add/:userId', async (req, res)=>{
+router.post('/add/:userId', async (req, res)=>{
   try {
     const { userId } = req.params;
     const { steps, tags, ...insertObject } = req.body as unknown as ITutorial;
-    
+    const categoryIdV = insertObject.categoryId as string;
+
     //Check if user id exists.
 
-    if (steps.length > 0 && tags.length > 0) {
-  
-      const newTutorialIndex = await tutorialInstance.addTutorial(userId as string, {...{steps}, ...{tags}, ...insertObject});
-      res.status(200).json({newIndex: newTutorialIndex});
-    }else{
-      res.status(500).json({error: "'Steps' and 'Tags' length must be greater than 0"});
+    if (categoryIdV.length === 0 || insertObject.description.length === 0 || insertObject.requirements.length === 0 || insertObject.title.length === 0) {
+      res.status(500).json({error: "'Complete all the fields'"});
+    } else {
+      if (steps.length > 0 && tags.length > 0) {
+      
+        const newTutorialIndex = await tutorialInstance.addTutorial(userId as string, {...{steps}, ...{tags}, ...insertObject});
+        res.status(200).json({newIndex: newTutorialIndex});
+      }else{
+        res.status(500).json({error: "'Steps' and 'Tags' length must be greater than 0"});
+      }
     }
 
   } catch (error) {
@@ -76,14 +81,19 @@ router.put('/add/:userId', async (req, res)=>{
 router.put('/update/:id', async (req, res)=>{
   try {
     const { id } = req.params;
-    const { steps, tags, ...updateTutorial } = req.body as unknown as ITutorial;
+    const {steps, tags, ...updateTutorial } = req.body as unknown as ITutorial;
+    const categoryIdV = updateTutorial.categoryId as string;
     
-    if (steps.length > 0 && tags.length > 0) {
-      await tutorialInstance.updateTutorial({...{_id:id}, ...updateTutorial});
-      res.status(200).json({"msg":"Registro Actualizado."});
-    }
-    else{
-      res.status(500).json({error: "'Steps' and 'Tags' length must be greater than 0"});
+    if (categoryIdV.length === 0 || updateTutorial.description.length === 0 || updateTutorial.requirements.length === 0 || updateTutorial.title.length === 0) {
+      res.status(500).json({error: "'Complete all the fields'"});
+    } else {
+      if (steps.length > 0 && tags.length > 0) {
+        await tutorialInstance.updateTutorial({...{_id:id}, ...updateTutorial});
+        res.status(200).json({"msg":"Registro Actualizado."});
+      }
+      else{
+        res.status(500).json({error: "'Steps' and 'Tags' length must be greater than 0"});
+      } 
     }
 
   } catch (error) {

@@ -36,6 +36,17 @@ router.get('/all', async (_req, res)=>{
     }
   });
 
+  router.get('/bycategory/:categoryId', async(req, res)=>{
+    try {
+      const {categoryId} = req.params;
+      const tutorialsList = await categoriesInstance.getTutorialsByCategory(categoryId);
+      res.status(200).json(tutorialsList);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({error:error});
+    }
+  });
+
   router.post('/add', async (req, res)=>{
     try {
       const newCategories = req.body as unknown as ICategories;

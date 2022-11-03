@@ -97,10 +97,11 @@ export class TutorialDao extends AbstractDao<ITutorial> {
    */
   public async insertNewTutorial(newTutorial: ITutorial) {
     try {
-      const { _id, authorId, ...newObject } = newTutorial;
+      const { _id, authorId, categoryId, ...newObject } = newTutorial;
       // const result = await super.updateRaw(userIdentifier, {"$push":{ "tutorials":{...{_id: new ObjectId()},...newObject}}});
       const result = await super.createOne({
         ...{ authorId: new ObjectId(authorId as string) },
+        ...{categoryId: new ObjectId(categoryId as string) },
         ...newObject,
       });
       return result;
@@ -112,8 +113,11 @@ export class TutorialDao extends AbstractDao<ITutorial> {
 
   public async updateTutorial(updateTutorial: Partial<ITutorial>) {
     try {
-      const { _id, ...updateObject } = updateTutorial;
-      const result = await super.update(_id as string, updateObject);
+      const { _id, authorId, categoryId, ...updateObject } = updateTutorial;
+      const result = await super.update(_id as string,{ 
+        ...{authorId: new ObjectId(authorId as string)},
+        ...{categoryId: new ObjectId(categoryId as string)},
+        ...updateObject});
       return result;
     } catch (ex: unknown) {
       console.log('TutorialDao mongodb:', (ex as Error).message);
