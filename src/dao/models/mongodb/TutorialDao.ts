@@ -16,20 +16,31 @@ export class TutorialDao extends AbstractDao<ITutorial> {
     super('Tutorial', db);
   }
 
-  public async getTutorials() {
+  public async getTutorials(page:number = 1, itemsPerPage: number = 10) {
     try {
-      return await super.findAll();
+      const total = await super.getCollection().countDocuments()
+      const totalPages = Math.ceil(total/itemsPerPage);
+
+      const items = await super.aggregate([
+        { $skip:((page-1) * itemsPerPage) },
+        { $limit: itemsPerPage }]
+        ,{});
+
+      return { total, totalPages, page, itemsPerPage, items };
+
     } catch (ex: unknown) {
       console.log('TutorialDao mongodb:', (ex as Error).message);
       throw ex;
     }
   }
 
-  public async getTutorialsForUser(identifier: string) {
+  public async getTutorialsForUser(identifier: string, page:number = 1, itemsPerPage: number = 10) {
     try {
-      return super.aggregate(
-        [
-          {
+      const total = await super.getCollection().countDocuments()
+      const totalPages = Math.ceil(total/itemsPerPage);
+
+      const items = await super.aggregate(
+        [{
             $addFields: {
               userLiked: {
                 $cond: {
@@ -48,9 +59,14 @@ export class TutorialDao extends AbstractDao<ITutorial> {
             },
           },
           authorInfoRelation,
+          { $skip:((page-1) * itemsPerPage) },
+          { $limit: itemsPerPage },
         ],
         {},
       );
+
+      return { total, totalPages, page, itemsPerPage, items };
+
     } catch (ex: unknown) {
       console.log('TutorialDao mongodb:', (ex as Error).message);
       throw ex;
@@ -75,14 +91,36 @@ export class TutorialDao extends AbstractDao<ITutorial> {
 
   /**
    * @param identifier
+   * @param page
+   * @param itemsPerPage
    * @description Retorna los tutoriales pertenecientes a un usuario.
    * @returns array<ITutorial>
    */
-  public async getTutorialsByUser(identifier: string) {
+  public async getTutorialsByUser(identifier: string, page:number = 1, itemsPerPage: number = 10) {
     try {
-      const result = await super.findByFilter({
+      const total = await super.getCollection().countDocuments({authorId: new ObjectId(identifier)})
+      const totalPages = Math.ceil(total/itemsPerPage);
+
+      const items = await super.findByFilter({
         authorId: new ObjectId(identifier),
+      },
+      {
+        skip:((page-1) * itemsPerPage) ,
+        limit: itemsPerPage ,
       });
+
+      return { total, totalPages, page, itemsPerPage, items };
+
+    } catch (ex: unknown) {
+      console.log('TutorialDao mongodb:', (ex as Error).message);
+      throw ex;
+    }
+  }
+
+  public async customSearch(search:string){
+    try {
+      console.log(search);
+      const result = await super.findByFilter({title:new RegExp(search)})
       return result;
     } catch (ex: unknown) {
       console.log('TutorialDao mongodb:', (ex as Error).message);
