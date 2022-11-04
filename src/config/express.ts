@@ -5,7 +5,7 @@ import errorHandler from './expressError';
 import expressNotFound from './expressNotFound';
 import expressLogger from './expressLogger';
 import cookieparser from 'cookie-parser';
-require("cookie")
+
 const createServer = () => {
   const app = express();
   app.use(express.urlencoded({ extended: true }));
@@ -13,10 +13,10 @@ const createServer = () => {
   app.use(cors());
   app.use(express.json());
   app.disable('x-powered-by');
+  app.use(cookieparser());
   app.use('/', rootRoute);
   app.use(expressNotFound);
   app.use(errorHandler);
-  app.use(cookieparser());
   return app;
 };
 

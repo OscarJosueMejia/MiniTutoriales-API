@@ -12,7 +12,6 @@ export const verifyToken = (req,res,next)=>{
             console.log(error);
             return res.status(401).json({"error": true, "message": 'Unauthorized access.' });
         }
-        
     } else {
         // if there is no token
         // return an error

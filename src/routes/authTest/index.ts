@@ -6,7 +6,7 @@ const router = Router();
 
 router.post('/login', async (req, res) => {
     const authObject = (sign(req.body));
-    res.cookie('jwt',authObject.refreshToken,{ httpOnly:true,
+    res.cookie('jwt',authObject.token,{ httpOnly:true,
         sameSite: "none", secure: false,
         maxAge: 24 * 60 * 60 * 1000
     });
@@ -21,6 +21,5 @@ router.get('/', (req,res)=>{
     const token = refresh(req);
     res.status(200).json({...response, ...token});
 })
-
 
 export default router;
