@@ -27,19 +27,19 @@ router.post('/signin', async (req, res)=> {
   }
 });
 
-// router.post('/login', async (req, res)=> {
-//   try {
-//     const {email, password} = req.body;
-//     const result = await users.login(email, password);
+router.post('/login', async (req, res)=> {
+  try {
+    const {email, password} = req.body;
+    const result = await users.login(email, password);
 
-//     console.log("LOGIN:", result);
-//     res.status(200).json(result);
+    console.log("LOGIN:", result);
+    res.status(200).json(result);
 
-//   } catch(ex) {
-//     console.log("Error:", ex);
-//     res.status(403).json({error:"Credenciales no son válidas"});
-//   }
-// });
+  } catch(ex) {
+    console.log("Error:", ex);
+    res.status(403).json({error:"Credenciales no son válidas"});
+  }
+});
 
 // router.post('/addrole/:id', async (req, res) => {
 //   try {
@@ -56,44 +56,44 @@ router.post('/signin', async (req, res)=> {
 //   }
 // })
 
-// router.post('/changePassword', async (req, res)=> {
-//   try {
-//     const {email, oldPassword, newPassword} = req.body;
+router.post('/changePassword', async (req, res)=> {
+  try {
+    const {email, oldPassword, newPassword} = req.body;
 
-//     await users.changePassword(email, oldPassword, newPassword);
+    await users.changePassword(email, oldPassword, newPassword);
 
-//     res.status(200).json({"msg":"Contraseña Actualizada"})
+    res.status(200).json({"msg":"Contraseña Actualizada"})
 
-//   } catch(error) {
-//     console.log("Error:", error);
-//     res.status(403).json({error: (error as Error).message});
-//   }
-// });
+  } catch(error) {
+    console.log("Error:", error);
+    res.status(403).json({error: (error as Error).message});
+  }
+});
 
-// router.post('/generateRecoveryPin', async (req, res)=> {
-//   try {
-//     const {email} = req.body;
-//     const result = await users.generateRecoveryCode(email);
+router.post('/generateRecoveryPin', async (req, res)=> {
+  try {
+    const {email} = req.body;
+    const result = await users.generateRecoveryCode(email);
 
-//     res.status(200).json(result);
+    res.status(200).json(result);
 
-//   } catch(error) {
-//     console.log("Error:", error);
-//     res.status(403).json({error: (error as Error).message});
-//   }
-// });
+  } catch(error) {
+    console.log("Error:", error);
+    res.status(403).json({error: (error as Error).message});
+  }
+});
 
-// router.post('/recoveryChangePassword', async (req, res)=> {
-//   try {
-//     const {email, pin, newPassword} = req.body;
+router.post('/recoveryChangePassword', async (req, res)=> {
+  try {
+    const {email, pin, newPassword} = req.body;
 
-//     await users.verifyRecoveryData(email, pin, newPassword);
-//     res.status(200).json({"msg":"Contraseña Actualizada"})
+    await users.verifyRecoveryData(email, pin, newPassword);
+    res.status(200).json({"msg":"Contraseña Actualizada"})
 
-//   } catch(error) {
-//     console.log("Error:", error);
-//     res.status(403).json({error: (error as Error).message});
-//   }
-// });
+  } catch(error) {
+    console.log("Error:", error);
+    res.status(403).json({error: (error as Error).message});
+  }
+});
 
 export default router;
