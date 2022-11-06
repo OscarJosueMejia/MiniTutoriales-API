@@ -26,18 +26,32 @@ export class UsersDao extends AbstractDao<IUser>{
     return this.createOne(newUser);
   }
 
-//   public async getAllUsers(){
-//     try {
-//       return await this.findAll();
-//     } catch( ex: unknown) {
-//       console.log("UsersDao mongodb:", (ex as Error).message);
-//       throw ex;
-//     }
-//   }
+  public async updateUser(user: Partial<IUser>){
+    try {
+      const { _id, ...updateObject} = user;
 
-//   public updateUserStatus(id:string){
-//     return this.update(id, {updated: new Date()});
-//   }
+      return await this.update(_id as string, updateObject);
+     
+    } catch( ex: unknown) {
+      console.log("UsersDao mongodb:", (ex as Error).message);
+      throw ex;
+    }
+  }
+
+  public async updateStatusUser(user: Partial<IUser>){
+   try {
+     const { _id, ...updateObject} = user;
+
+     return await this.update(_id as string, updateObject);
+    
+   } catch( ex: unknown) {
+     console.log("UsersDao mongodb:", (ex as Error).message);
+     throw ex;
+   }
+   
+ }
+
+}
 
 //   public updateUserFailed(id:string){
 //     return this.updateRaw(id, {$inc:{failedAttempts:1}, $set:{updated: new Date()}});
@@ -55,22 +69,10 @@ export class UsersDao extends AbstractDao<IUser>{
 //       );
 //   }
 
-//   public async updateUser(user: Partial<IUser>){
-//     try {
-//       const {_id, ...updateObject} = user;
-
-//       return await this.update(_id as string, updateObject);
-      
-//     } catch( ex: unknown) {
-//       console.log("UsersDao mongodb:", (ex as Error).message);
-//       throw ex;
-//     }
-//   }
-
 //   public async deleteRecoveryToken(user: Partial<IUser>){
 //     try {
 //       const {_id} = user;
-
+//
 //       return await this.updateRaw(_id as string, {"$unset":{"passwordChangeToken":""}});
       
 //     } catch( ex: unknown) {
@@ -79,5 +81,13 @@ export class UsersDao extends AbstractDao<IUser>{
 //     }
 //   }
 
-
-}
+//public async deleteUser(deleteUser: IUser){
+//  try {
+//      const {_id, ...updateObject} = deleteUser;
+//      const result = await super.update(_id as string, updateObject);
+//      return result;
+//    } catch( ex: unknown) {
+//      console.log("CategoriesDao mongodb:", (ex as Error).message);
+//      throw ex;
+//    }
+//}

@@ -27,6 +27,30 @@ router.post('/signin', async (req, res)=> {
   }
 });
 
+router.put('/update', async (req, res)=> {
+  try {
+    const {_id,username, email, password} = req.body;
+    console.log(username, email);
+    const result = await users.updatePublic(_id,username, email, password);    
+
+    res.status(200).json({"msg":"Usuario Actualizado Correctamente", result});
+  } catch(ex) {
+    console.log("Error:", ex);
+    res.status(500).json({error:"Error al Actualizar usuario"});
+  }
+});
+
+router.put('/delete', async (req, res)=>{
+  try {
+    const {_id} = req.body;
+    const idC = (/^\d*$/.test(_id))?+_id:_id;
+    await users.updateStatus(idC as string);
+    res.status(200).json({"msg":"Registro Eliminado"});
+  } catch(error) {
+    res.status(500).json({error: (error as Error).message});
+  }
+});
+
 // router.post('/login', async (req, res)=> {
 //   try {
 //     const {email, password} = req.body;
