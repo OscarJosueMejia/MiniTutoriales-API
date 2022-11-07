@@ -26,41 +26,18 @@ export class UsersDao extends AbstractDao<IUser>{
     return this.createOne(newUser);
   }
 
-  public async updateUser(user: Partial<IUser>){
-    try {
-      const { _id, ...updateObject} = user;
-
-      return await this.update(_id as string, updateObject);
-     
-    } catch( ex: unknown) {
-      console.log("UsersDao mongodb:", (ex as Error).message);
-      throw ex;
-    }
+  public updateUserStatus(id:string){
+    return this.update(id, {updated: new Date()});
   }
 
-  public async updateStatusUser(user: Partial<IUser>){
-   try {
-     const { _id, ...updateObject} = user;
+  public updateUserFailed(id:string){
+    return this.updateRaw(id, {$inc:{failedAttempts:1}, $set:{updated: new Date()}});
+  }
 
-     return await this.update(_id as string, updateObject);
-    
-   } catch( ex: unknown) {
-     console.log("UsersDao mongodb:", (ex as Error).message);
-     throw ex;
-   }
-   
- }
-
-}
-
-//   public updateUserFailed(id:string){
-//     return this.updateRaw(id, {$inc:{failedAttempts:1}, $set:{updated: new Date()}});
-//   }
-
-//   public updateLoginSuccess(id:string){
-//     const currentDate = new Date();
-//     return this.update(id, {lastLogin: currentDate, failedAttempts: 0, updated: currentDate})
-//   }
+  public updateLoginSuccess(id:string){
+    const currentDate = new Date();
+    return this.update(id, {lastLogin: currentDate, failedAttempts: 0, updated: currentDate})
+  }
 
 //   public addRoleToUser(id:string, role:string){
 //     return this.updateRaw(id, 
@@ -69,17 +46,27 @@ export class UsersDao extends AbstractDao<IUser>{
 //       );
 //   }
 
-//   public async deleteRecoveryToken(user: Partial<IUser>){
-//     try {
-//       const {_id} = user;
-//
-//       return await this.updateRaw(_id as string, {"$unset":{"passwordChangeToken":""}});
+  public async updateUser(user: Partial<IUser>){
+    try {
+      const {_id, ...updateObject} = user;
+
+      return await this.update(_id as string, updateObject);
       
-//     } catch( ex: unknown) {
-//       console.log("UsersDao mongodb:", (ex as Error).message);
-//       throw ex;
-//     }
-//   }
+    } catch( ex: unknown) {
+      console.log("UsersDao mongodb:", (ex as Error).message);
+      throw ex;
+    }
+  }
+
+  public async deleteRecoveryToken(user: Partial<IUser>){
+    try {
+      const {_id} = user; 
+      return await this.updateRaw(_id as string, {"$unset":{"passwordChangeToken":""}})  
+    } catch( ex: unknown) {
+      console.log("UsersDao mongodb:", (ex as Error).message);
+      throw ex;
+    }
+  }
 
 //public async deleteUser(deleteUser: IUser){
 //  try {
