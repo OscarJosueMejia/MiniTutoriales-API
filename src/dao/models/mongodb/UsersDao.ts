@@ -39,12 +39,12 @@ export class UsersDao extends AbstractDao<IUser>{
     return this.update(id, {lastLogin: currentDate, failedAttempts: 0, updated: currentDate})
   }
 
-//   public addRoleToUser(id:string, role:string){
-//     return this.updateRaw(id, 
-//         //{$push : {roles: role}}
-//         {$addToSet: {roles:role}}
-//       );
-//   }
+  public addRoleToUser(id:string, role:string){
+    return this.updateRaw(id, 
+        //{$push : {roles: role}}
+        {$addToSet: {roles:role}}
+      );
+  }
 
   public async updateUser(user: Partial<IUser>){
     try {

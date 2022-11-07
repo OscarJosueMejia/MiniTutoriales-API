@@ -4,7 +4,8 @@ import { getPassword, checkPassword } from '@utils/crypto';
 import { sign, signOptions, verify } from '@utils/jwt';
 import generateRandomNumber from '@utils/pinGenerator';
 import { emailSender } from '@config/email';
-// const availableRole = ['public', 'admin', 'auditor', 'support'];
+
+const availableRole = ['public', 'admin', 'auditor', 'support'];
 
 export class Users {
   private dao: UsersDao;
@@ -20,7 +21,7 @@ export class Users {
     return this.dao.getAllUsers();
   }
 
-  public signin(username: string, email: string, password: string) {
+  public signin(username: string, email: string, password: string, roles:[string]=['public']) {
     const currentDate = new Date();
     const newUser = {
       username,
@@ -33,7 +34,7 @@ export class Users {
       failedAttempts: 0,
       lastLogin: currentDate,
       avatar: '',
-      roles: ['public'],
+      roles: roles,
       _id: null,
     };
     return this.dao.createUser(newUser);
@@ -76,13 +77,12 @@ export class Users {
     }
   }
 
-  //   public async assignRoles(id: string, role: string){
-  //     if (! availableRole.includes(role) ) {
-  //         throw new Error(`Role ${role} must be ${availableRole.join(', ')} ` )
-  //     }
-
-  //     return this.dao.addRoleToUser(id, role);
-  //   }
+  public async assignRoles(id: string, role: string){
+    if (! availableRole.includes(role) ) {
+        throw new Error(`Role ${role} must be ${availableRole.join(', ')} ` )
+    }
+    return this.dao.addRoleToUser(id, role);
+  }
 
   public async changePassword(email, oldPassword, newPassword) {
     const user = await this.dao.getUserByEmail(email);
