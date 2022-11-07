@@ -58,6 +58,16 @@ export abstract class AbstractDao<T> implements IDaoObject {
     return this.collection.updateOne({ _id }, data);
   }
 
+  public async updateByFilter(
+    filter: Filter<T>,
+    data: unknown,
+  ): Promise<UpdateResult> {
+    return this.collection.updateOne(filter, 
+      {
+        $set:data
+      }as unknown as UpdateFilter<T>);
+  }
+
   public async delete(identifier: string): Promise<DeleteResult> {
     const _id = new ObjectId(identifier) as Filter<T>;
     return this.collection.deleteOne({ _id });
@@ -68,6 +78,14 @@ export abstract class AbstractDao<T> implements IDaoObject {
   ): Promise<WithId<T>[]> {
     return this.collection.find(filter, options).toArray();
   }
+
+  public findOneByFilter(
+    filter: Filter<T>,
+    options: FindOptions<T> = {},
+  ): Promise<WithId<T>> {
+    return this.collection.findOne(filter, options);
+  }
+  
   public aggregate(
     stages: Document[],
     options: AggregateOptions,

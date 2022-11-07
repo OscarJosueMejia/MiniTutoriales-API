@@ -1,0 +1,22 @@
+// MongoDB Playground
+// Use Ctrl+Space inside a snippet or a string literal to trigger completions.
+
+// The current database to use.
+use('mini-tutos');
+
+// db.User.updateOne({
+//   "tutorials._id": new ObjectId("6355e4273138418650b21d63")
+// },
+// {
+//   $set:{
+//     "tutorials.$":{"title":"hola"}
+//   }
+// }
+// )
+
+db.Tutorial.find({$and:
+[
+  {'_id': new ObjectId("63560cfe2ec2657bce750b51")},
+  {'reactionsCount.reaction_IsUtil': {$in: ['6355bf4a972277413bb8ddca']}}
+  
+  ]}).count();
