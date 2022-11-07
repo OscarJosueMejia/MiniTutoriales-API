@@ -27,7 +27,7 @@ export class Users {
       email,
       password: getPassword(password),
       status: 'ACT',
-      oldPasswords: [password] as string[],
+      oldPasswords: [] as string[],
       created: currentDate,
       updated: currentDate,
       failedAttempts:0,
@@ -41,6 +41,7 @@ export class Users {
 
   public updatePublic(_id:unknown, username:string, email:string, password:string){
     const currentDate = new Date();
+
     const updatedUser = {
       _id,
       username,
@@ -67,6 +68,15 @@ export class Users {
     };
     return this.dao.updateStatusUser(updatedUser);
   }
+
+  public getUsersByEmail(email:string){
+    return this.dao.getUserByEmail(email);
+  }
+
+  public getUsersById(_id:string){
+    return this.dao.getUserById(_id);
+  }
+
 }
 
   // public async login(email: string, password: string) {

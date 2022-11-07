@@ -48,8 +48,11 @@ export class UsersDao extends AbstractDao<IUser>{
      console.log("UsersDao mongodb:", (ex as Error).message);
      throw ex;
    }
-   
  }
+
+ public getUserById(_id:string){
+  return this.findByID(_id);
+}
 
 }
 
