@@ -17,9 +17,10 @@ router.get('/one/:id', async (req, res)=>{
   }
 });
 
-router.get('/all', async (_req, res)=>{
+router.get('/all', async (req, res)=>{
   try {
-    const tutorialsList = await tutorialInstance.getTutorials();
+    const {page, items} = {page:"1", items:"10", ...req.query};
+    const tutorialsList = await tutorialInstance.getTutorials(Number(page), Number(items));
     res.json(tutorialsList);
 
   } catch (ex) {
@@ -31,7 +32,8 @@ router.get('/all', async (_req, res)=>{
 router.get('/logged_user/:userId', async (req, res)=>{
   try {
     const {userId} = req.params;
-    const tutorialsList = await tutorialInstance.getTutorialsForUser(userId);
+    const {page, items} = {page:"1", items:"10", ...req.query};
+    const tutorialsList = await tutorialInstance.getTutorialsForUser(userId, Number(page), Number(items));
     res.json(tutorialsList);
 
   } catch (ex) {
@@ -43,8 +45,22 @@ router.get('/logged_user/:userId', async (req, res)=>{
 router.get('/list/:userId', async (req, res)=>{
   try {
     const { userId } = req.params;
-    console.log(userId);
-    const tutorialList = await tutorialInstance.getTutorialsByUser(userId);
+    const {page, items} = {page:"1", items:"10", ...req.query};
+    
+    const tutorialList = await tutorialInstance.getTutorialsByUser(userId, Number(page), Number(items));
+    res.json(tutorialList);
+
+  } catch (ex) {
+    console.error(ex);
+    res.status(503).json({error:ex});
+  }
+});
+
+router.get('/custom/:search', async (req, res)=>{
+  try {
+    const { search } = req.params;
+    const tutorialList = await tutorialInstance.customSearch(search);
+    
     res.json(tutorialList);
 
   } catch (ex) {

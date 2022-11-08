@@ -4,7 +4,8 @@ import { getPassword, checkPassword } from '@utils/crypto';
 import { sign, signOptions, verify } from '@utils/jwt';
 import generateRandomNumber from '@utils/pinGenerator';
 import { emailSender } from '@config/email';
-// const availableRole = ['public', 'admin', 'auditor', 'support'];
+
+const availableRole = ['public', 'admin', 'auditor', 'support'];
 
 export class Users {
   private dao: UsersDao;
@@ -20,20 +21,20 @@ export class Users {
     return this.dao.getAllUsers();
   }
 
-  public signin(username: string, email: string, password: string) {
+  public signin(username: string, email: string, password: string, roles:[string]=['public']) {
     const currentDate = new Date();
     const newUser = {
       username,
       email,
       password: getPassword(password),
       status: 'ACT',
-      oldPasswords: [password] as string[],
+      oldPasswords: [] as string[],
       created: currentDate,
       updated: currentDate,
       failedAttempts: 0,
       lastLogin: currentDate,
       avatar: '',
-      roles: ['public'],
+      roles: roles,
       _id: null,
     };
     return this.dao.createUser(newUser);
@@ -105,13 +106,12 @@ export class Users {
     }
   }
 
-  //   public async assignRoles(id: string, role: string){
-  //     if (! availableRole.includes(role) ) {
-  //         throw new Error(`Role ${role} must be ${availableRole.join(', ')} ` )
-  //     }
-
-  //     return this.dao.addRoleToUser(id, role);
-  //   }
+  public async assignRoles(id: string, role: string){
+    if (! availableRole.includes(role) ) {
+        throw new Error(`Role ${role} must be ${availableRole.join(', ')} ` )
+    }
+    return this.dao.addRoleToUser(id, role);
+  }
 
   public async changePassword(email, oldPassword, newPassword) {
     const user = await this.dao.getUserByEmail(email);
@@ -154,7 +154,7 @@ export class Users {
     });
   }
 
-  public async generateRecoveryCode(email) {
+  public async generateRecoveryCode(email:string, securityInfo:object) {
     const user = await this.dao.getUserByEmail(email);
     if (!!!user) {
       console.log('ACCOUNT RECOVERY: USER NOT FOUND', `${email}`);
@@ -170,7 +170,6 @@ export class Users {
     const { email: emailUser, _id } = user;
     const recoveryPin = generateRandomNumber();
     const returnUser = { email: emailUser, _id, pin: recoveryPin };
-
     const preparedEmail = {
       email: emailUser,
       subject: 'Password Recovery Pin MiniTutos',
@@ -178,8 +177,10 @@ export class Users {
       context: {
         name: emailUser,
         pin: recoveryPin,
+        ...securityInfo
       },
     };
+    console.log(preparedEmail);
 
     await emailSender(preparedEmail);
 
@@ -262,4 +263,14 @@ export class Users {
     });
     return isIncluded.length === 0;
   }
+
+  public getUsersByEmail(email:string){
+    return this.dao.getUserByEmail(email);
+  }
+
+  public getUsersById(_id:string){
+    return this.dao.getUserById(_id);
+  }
+
 }
+

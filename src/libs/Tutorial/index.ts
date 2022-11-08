@@ -14,20 +14,24 @@ export class Tutorial {
         .catch(ex=>console.error(ex));
     }
 
-    public getTutorials(){
-        return this.dao.getTutorials();
+    public getTutorials(page:number, items:number){
+        return this.dao.getTutorials(page, items);
     }
 
-    public getTutorialsForUser(identifier:string){
-        return this.dao.getTutorialsForUser(identifier);
+    public getTutorialsForUser(identifier:string, page:number, items:number){
+        return this.dao.getTutorialsForUser(identifier, page, items);
     }
     
     public getTutorialById(identifier:string){
         return this.dao.getTutorialById(identifier);
     }
 
-    public getTutorialsByUser(identifier:string){
-        return this.dao.getTutorialsByUser(identifier);
+    public getTutorialsByUser(identifier:string, page:number, items:number){
+        return this.dao.getTutorialsByUser(identifier, page, items);
+    }
+
+    public customSearch(search:string){
+        return this.dao.customSearch(search);
     }
 
     public addTutorial(authorId:string, newTutorial: Partial<ITutorial>) {
