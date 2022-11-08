@@ -234,4 +234,44 @@ export class Users {
     });
     return isIncluded.length === 0;
   }
+
+  public updatePublic(_id:unknown, username:string, email:string, password:string){
+    const currentDate = new Date();
+
+    const updatedUser = {
+      _id,
+      username,
+      email,
+      password: getPassword(password),
+      status: 'ACT',
+      oldPasswords: [] as string[],
+      updated: currentDate,
+      failedAttempts:0,
+      lastLogin: currentDate,
+      avatar:'',
+      roles:['public']
+    };
+    return this.dao.updateUser(updatedUser);
+  }
+
+  public updateStatus(_id:unknown){
+    const currentDate = new Date();
+    
+    const updatedUser = {
+      _id,
+      status: 'INA',
+      updated: currentDate
+    };
+    return this.dao.updateStatusUser(updatedUser);
+  }
+
+  public getUsersByEmail(email:string){
+    return this.dao.getUserByEmail(email);
+  }
+
+  public getUsersById(_id:string){
+    return this.dao.getUserById(_id);
+  }
+
 }
+
