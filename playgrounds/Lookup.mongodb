@@ -1,22 +1,25 @@
 // The current database to use.
+// use('mini-tutos');
+
+
+// db.Tutorial.aggregate([{
+//     $addFields: {
+//         userLiked:{
+//             $cond:{
+//                 if: {$in:["6355bf4a972277413bb8ddca","$reactionsCount.reaction_IsUtil"]},
+//                 then: true,
+//                 else: false
+//             }
+//         },
+//         userDisliked:{
+//             $cond:{
+//                 if: {$in:["6355bf4a972277413bb8ddca","$reactionsCount.reaction_Dislike"]},
+//                 then: true,
+//                 else: false
+//             }
+//         }
+//     }
+// }])
+
+
 use('mini-tutos');
-
-
-db.Tutorial.aggregate([{
-    $addFields: {
-        userLiked:{
-            $cond:{
-                if: {$in:["6355bf4a972277413bb8ddca","$reactionsCount.reaction_IsUtil"]},
-                then: true,
-                else: false
-            }
-        },
-        userDisliked:{
-            $cond:{
-                if: {$in:["6355bf4a972277413bb8ddca","$reactionsCount.reaction_Dislike"]},
-                then: true,
-                else: false
-            }
-        }
-    }
-}])
