@@ -1,7 +1,7 @@
 {
-  "name": "express-ts-sw-boilerplate",
+  "name": "minitutorials-backend",
   "version": "1.0.0",
-  "description": "Express Typescript Boilerplate for SW ICC course",
+  "description": "Express based Backend for MiniTutorials WebApp",
   "main": "index.ts",
   "scripts": {
     "start": "ts-node -r tsconfig-paths/register -r dotenv/config src/index",
@@ -36,7 +36,6 @@
     "@types/ua-parser-js": "^0.7.36",
     "bcrypt": "^5.0.1",
     "bcryptjs": "^2.4.3",
-    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.2",
     "express": "^4.18.1",
@@ -46,8 +45,6 @@
     "mongodb": "^4.10.0",
     "nodemailer": "^6.8.0",
     "nodemailer-express-handlebars": "^5.0.0",
-    "sqlite": "^4.1.2",
-    "sqlite3": "^5.1.1",
     "ua-parser-js": "^1.0.32",
     "winston": "^3.8.2"
   }
