@@ -59,6 +59,7 @@ async (req, res) => {
         return res.status(500).json({ errors: errors.array() });
       }
 
+router.put('/update', async (req, res)=> {
     const result = await users.login(email, password);
 
     console.log('LOGIN:', result);
@@ -120,8 +121,40 @@ router.get('/profile/:id', async (req, res)=> {
 //     const {email, password} = req.body;
 //     const result = await users.login(email, password);
 
+<<<<<<< HEAD
+//     console.log("LOGIN:", result);
+//     res.status(200).json(result);
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const result = await users.login(email, password);
+
+    console.log('LOGIN:', result);
+    res.cookie('jwt', result.token, {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: false,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+    res.status(200).json(result);
+  } catch (ex) {
+    console.log('Error:', ex);
+    res.status(403).json({ error: 'Credenciales no son válidas' });
+  }
+});
+
+router.get('/logout', async (req, res) => {
+  req.body;
+  res.clearCookie('jwt');
+  res.status(200).json({ msg: 'Sesión Cerrada Correctamente.' });
+});
+
+// router.post('/addrole/:id', async (req, res) => {
+//   try {
+=======
 router.post('/addrole/:id', async (req, res) => {
   try {
+>>>>>>> 5d71948e648159122663f4a1a90ac2cde10eded7
 
     const { id } = req.params;
     const {role} = req.body;
