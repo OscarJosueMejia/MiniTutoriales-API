@@ -125,7 +125,7 @@ export class Users {
     });
   }
 
-  public async generateRecoveryCode(email) {
+  public async generateRecoveryCode(email:string, securityInfo:object) {
     const user = await this.dao.getUserByEmail(email);
     if (!!!user) {
       console.log('ACCOUNT RECOVERY: USER NOT FOUND', `${email}`);
@@ -141,7 +141,6 @@ export class Users {
     const { email: emailUser, _id } = user;
     const recoveryPin = generateRandomNumber();
     const returnUser = { email: emailUser, _id, pin: recoveryPin };
-
     const preparedEmail = {
       email: emailUser,
       subject: 'Password Recovery Pin MiniTutos',
@@ -149,8 +148,10 @@ export class Users {
       context: {
         name: emailUser,
         pin: recoveryPin,
+        ...securityInfo
       },
     };
+    console.log(preparedEmail);
 
     await emailSender(preparedEmail);
 

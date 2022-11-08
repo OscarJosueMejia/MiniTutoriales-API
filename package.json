@@ -33,6 +33,7 @@
     "@types/cookie-parser": "^1.4.3",
     "@types/nodemailer": "^6.4.6",
     "@types/nodemailer-express-handlebars": "^4.0.2",
+    "@types/ua-parser-js": "^0.7.36",
     "bcrypt": "^5.0.1",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
@@ -47,6 +48,7 @@
     "nodemailer-express-handlebars": "^5.0.0",
     "sqlite": "^4.1.2",
     "sqlite3": "^5.1.1",
+    "ua-parser-js": "^1.0.32",
     "winston": "^3.8.2"
   }
 }

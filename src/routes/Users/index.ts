@@ -1,6 +1,7 @@
 import express from 'express';
 import { Users } from '@libs/Users';
 import { body, validationResult } from 'express-validator';
+import parser from 'ua-parser-js';
 
 const router = express.Router();
 const users = new Users();
@@ -8,6 +9,7 @@ const users = new Users();
 router.get('/getAll', async (_req, res) => {
   try {
     const result = await users.getAllUsers();
+    
     res.status(200).json(result);
   } catch (ex) {
     console.log('Error:', ex);
@@ -30,7 +32,13 @@ router.post(
         return res.status(500).json({ errors: errors.array() });
       }
 
-      const result = await users.signin(username, email, password, roles);
+      let result:object;
+
+      if (!roles || roles.length === 0) {
+        result = await users.signin(username, email, password);
+      } else {
+        result = await users.signin(username, email, password, roles);
+      }
       return res.status(200).json({ msg: 'Usuario Creado Correctamente', result });
     } catch (ex) {
       console.log('Error:', ex);
@@ -67,26 +75,25 @@ async (req, res) => {
   }
 });
 
-router.get('/logout', async (req, res) => {
-  req.body;
+router.get('/logout', async (_req, res) => {
   res.clearCookie('jwt');
   res.status(200).json({ msg: 'Sesión Cerrada Correctamente.' });
 });
 
-// router.post('/addrole/:id', async (req, res) => {
-//   try {
+router.post('/addrole/:id', async (req, res) => {
+  try {
 
-//     const { id } = req.params;
-//     const {role} = req.body;
+    const { id } = req.params;
+    const {role} = req.body;
 
-//     const result = await users.assignRoles(id, role);
-//     console.log('ADD_ROLE ', result);
-//     res.status(200).json(result);
+    const result = await users.assignRoles(id, role);
+    console.log('ADD_ROLE ', result);
+    res.status(200).json(result);
 
-//   } catch (error) {
+  } catch (error) {
 
-//   }
-// })
+  }
+});
 
 router.post('/changePassword', 
 body('email').isEmail().withMessage('Correo inválido'),
@@ -123,7 +130,12 @@ async (req, res) => {
       return res.status(500).json({ errors: errors.array() });
     }
 
-    const result = await users.generateRecoveryCode(email);
+    const user_agent = parser(req.headers['user-agent']);
+    
+    const result = await users.generateRecoveryCode(email, {
+      operating_system: user_agent.os.name, 
+      browser_name: user_agent.browser.name
+    });
 
     return res.status(200).json(result);
   } catch (error) {
