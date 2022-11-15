@@ -19,7 +19,7 @@ const createServer = () => {
   app.use(express.json());
   app.disable('x-powered-by');
   // app.use(cookieParser());
-  app.use(session({ secret: 'keyboard cat' }));
+  app.use(session({ secret: 'SECRET' }));
   // Initialize Passport!  Also use passport.session() middleware, to support
   // persistent login sessions (recommended).
   app.use(passport.initialize());

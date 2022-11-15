@@ -40,6 +40,7 @@ router.get(
       'offline_access',
       'https://outlook.office.com/Mail.Read',
     ],
+    session: false,
   }),
   function (_req, _res) {
     // The request will be redirected to Outlook for authentication, so
@@ -54,7 +55,7 @@ router.get(
 //   which, in this example, will redirect the user to the home page.
 router.get(
   '/outlook/callback',
-  passport.authenticate('windowslive', { failureRedirect: '/login' }),
+  passport.authenticate('windowslive', { failureRedirect: '/auth/login' }),
   async function (req, res) {
     try {
       const userToInsert: UserOutlook = req.user;
