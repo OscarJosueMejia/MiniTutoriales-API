@@ -4,7 +4,7 @@ export interface ITutorial {
     categoryId: unknown;
     title: string;
     description: string;
-    requirements: string;
+    requirements: Array<string>;
     steps: Array<{
         stepNumber:number,
         description: string,

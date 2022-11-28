@@ -77,12 +77,38 @@ export class TutorialDao extends AbstractDao<ITutorial> {
    * @description Retorna los detalles de un tutorial.
    * @returns array<ITutorial>
    */
-  public async getTutorialById(identifier: string) {
+  public async getTutorialById(identifier: string, _userId?:string) {
     try {
-      return super.aggregate(
-        [{ $match: { _id: new ObjectId(identifier) } }, authorInfoRelation],
-        {},
-      );
+      if(!_userId){
+        return super.aggregate(
+          [{ $match: { _id: new ObjectId(identifier) } }, authorInfoRelation],
+          {},
+        );
+      }else{
+        return super.aggregate(
+          [{ $match: { _id: new ObjectId(identifier) } },
+            {
+              $addFields: {
+                userLiked: {
+                  $cond: {
+                    if: { $in: [_userId, '$reactionsCount.reaction_IsUtil'] },
+                    then: true,
+                    else: false,
+                  },
+                },
+                userDisliked: {
+                  $cond: {
+                    if: { $in: [_userId, '$reactionsCount.reaction_Dislike'] },
+                    then: true,
+                    else: false,
+                  },
+                },
+              },
+            },
+            authorInfoRelation],
+          {},
+        );
+      }
     } catch (ex: unknown) {
       console.log('TutorialDao mongodb:', (ex as Error).message);
       throw ex;
@@ -101,13 +127,33 @@ export class TutorialDao extends AbstractDao<ITutorial> {
       const total = await super.getCollection().countDocuments({authorId: new ObjectId(identifier)})
       const totalPages = Math.ceil(total/itemsPerPage);
 
-      const items = await super.findByFilter({
-        authorId: new ObjectId(identifier),
-      },
-      {
-        skip:((page-1) * itemsPerPage) ,
-        limit: itemsPerPage ,
-      });
+      const items = await super.aggregate(
+        [
+          { $match: { authorId: new ObjectId(identifier) } },
+          {
+            $addFields: {
+              userLiked: {
+                $cond: {
+                  if: { $in: [identifier, '$reactionsCount.reaction_IsUtil'] },
+                  then: true,
+                  else: false,
+                },
+              },
+              userDisliked: {
+                $cond: {
+                  if: { $in: [identifier, '$reactionsCount.reaction_Dislike'] },
+                  then: true,
+                  else: false,
+                },
+              },
+            },
+          },
+          authorInfoRelation,
+          { $skip:((page-1) * itemsPerPage) },
+          { $limit: itemsPerPage },
+        ],
+        {},
+      );
 
       return { total, totalPages, page, itemsPerPage, items };
 
@@ -151,11 +197,12 @@ export class TutorialDao extends AbstractDao<ITutorial> {
 
   public async updateTutorial(updateTutorial: Partial<ITutorial>) {
     try {
-      const { _id, authorId, categoryId, ...updateObject } = updateTutorial;
+      const { _id, categoryId, ...updateObject } = updateTutorial;
       const result = await super.update(_id as string,{ 
-        ...{authorId: new ObjectId(authorId as string)},
         ...{categoryId: new ObjectId(categoryId as string)},
-        ...updateObject});
+        ...updateObject
+      });
+      
       return result;
     } catch (ex: unknown) {
       console.log('TutorialDao mongodb:', (ex as Error).message);
