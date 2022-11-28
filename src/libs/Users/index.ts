@@ -1,6 +1,6 @@
 import { getConnection } from "@models/mongodb/MongoDBConn";
 import { UsersDao  } from "@models/mongodb/UsersDao";
-import { getPassword } from "@utils/crypto";
+import { getPassword, checkPassword } from "@utils/crypto";
 // import { sign, signOptions, verify } from '@utils/jwt';
 // import generateRandomNumber from "@utils/pinGenerator";
 
@@ -39,24 +39,57 @@ export class Users {
     return this.dao.createUser(newUser);
   }
 
-  public updatePublic(_id:unknown, username:string, email:string, password:string){
+  public updatePublic(_id:unknown, username:string, email:string, avatar:string){
     const currentDate = new Date();
 
     const updatedUser = {
       _id,
       username,
       email,
-      password: getPassword(password),
       status: 'ACT',
-      oldPasswords: [] as string[],
       updated: currentDate,
       failedAttempts:0,
-      lastLogin: currentDate,
-      avatar:'',
+      avatar,
       roles:['public']
     };
     return this.dao.updateUser(updatedUser);
   }
+
+  public async changePassword(email, oldPassword, newPassword){
+    const user = await this.dao.getUserByEmail(email);
+    
+    if(!!!user){
+      console.log("Password Change: Usuario No Encontrado", `${email}`)     
+      throw new Error("Password Change Usuario No Encontrado");
+      }
+    if (!this.checkOldPassword(user.oldPasswords, newPassword)) {
+      console.log("Password Change: New password was previously used.", `${user.email}`)     
+      throw new Error("New password was previously used.");
+      }
+    if (!checkPassword(oldPassword, user.password)) {
+      console.log("Password Change: Current passwords does not match.", `${user.email}`)     
+      throw new Error("Current passwords does not match.");
+      }
+      if (oldPassword === newPassword) {
+      console.log("Password Change: Current Password must not be the same as New Password.", `${user.email}`)     
+      throw new Error("Current Password must not be the same as New Password.");
+      }
+    
+      const { _id, password } = user;
+      let {oldPasswords} = user;
+    
+      oldPasswords.push(getPassword(password));
+    
+    return this.dao.updateUser({_id, password:getPassword(newPassword), oldPasswords});
+
+    }
+
+  public checkOldPassword(oldPasswords, newPassword:string){
+    let isIncluded = oldPasswords.filter(function(value){
+    return checkPassword(newPassword, value);
+    })
+    return isIncluded.length === 0;
+    }
 
   public updateStatus(_id:unknown){
     const currentDate = new Date();

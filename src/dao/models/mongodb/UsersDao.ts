@@ -50,9 +50,18 @@ export class UsersDao extends AbstractDao<IUser>{
    }
  }
 
- public getUserById(_id:string){
-  return this.findByID(_id);
-}
+  public getUserById(_id:string){
+    return this.findByID(_id);
+  }
+
+  updateUserFailed(_id:string){
+    return this.updateRaw(_id, {error: {failedAttemps: 1}});
+  }
+
+  updateLoginSucces(_id:string){
+    const currentDate= new Date();
+    return this.update(_id, {lastLogin: currentDate, failedAttempts: 0, updated: currentDate});
+  }
 
 }
 

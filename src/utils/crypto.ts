@@ -7,3 +7,4 @@ export const getPassword = (password:string)=> {
 export const checkPassword = (rawPassword:string, password: string) => {
   return bcrypt.compareSync(rawPassword, password);
 }
+
