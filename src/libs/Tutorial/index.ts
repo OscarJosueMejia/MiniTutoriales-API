@@ -30,8 +30,8 @@ export class Tutorial {
         return this.dao.getTutorialsByUser(identifier, page, items);
     }
 
-    public customSearch(search:string){
-        return this.dao.customSearch(search);
+    public customSearch(search:string, identifier:string){
+        return this.dao.customSearch(search, identifier);
     }
 
     public addTutorial(authorId:string, newTutorial: Partial<ITutorial>) {
@@ -43,6 +43,7 @@ export class Tutorial {
                 title,
                 description,
                 requirements,
+                comments:[],
                 steps,
                 reactionsCount:{reaction_IsUtil:[], reaction_Dislike:[]},
                 tags,

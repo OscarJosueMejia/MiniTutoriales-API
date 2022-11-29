@@ -21,23 +21,43 @@ export class Users {
     return this.dao.getAllUsers();
   }
 
-  public signin(username: string, email: string, password: string, roles:[string]=['public']) {
+  public async signin(name:string, email:string, password:string, roles:[string]=['public']) {
     const currentDate = new Date();
-    const newUser = {
-      username,
-      email,
-      password: getPassword(password),
-      status: 'ACT',
-      oldPasswords: [] as string[],
-      created: currentDate,
-      updated: currentDate,
-      failedAttempts: 0,
-      lastLogin: currentDate,
-      avatar: '',
-      roles: roles,
-      _id: null,
-    };
-    return this.dao.createUser(newUser);
+    const verificationPin = generateRandomNumber();
+    const EmailExistent = await this.dao.getUserByEmail(email);
+
+    if(!EmailExistent){
+      const newUser = {
+        name,
+        email,
+        password: getPassword(password),
+        status: 'NOTALLOWED',
+        oldPasswords: [] as string[],
+        created: currentDate,
+        updated: currentDate,
+        failedAttempts: 0,
+        lastLogin: currentDate,
+        verificationPin:signOptions({verificationPin:getPassword(verificationPin.toString())}, {expiresIn:'15m'}),
+        avatar: '',
+        roles: roles,
+        _id: null,
+      };
+  
+      const preparedEmail = {
+        email,
+        subject: 'Verificación de Cuenta',
+        templateName: 'activationtemplate', //El nombre del template que este dentro de la carpeta /config/htmlTemplates/
+        context: {
+          name: name,
+          pin: verificationPin,
+        },
+      };
+      await emailSender(preparedEmail);
+  
+      return this.dao.createUser(newUser);
+    }else{
+      throw new Error("El Correo Electrónico proporcionado ya esta en uso.");
+    }
   }
 
   public async login(email: string, password: string) {
@@ -65,8 +85,8 @@ export class Users {
         throw new Error('LOGIN INVALID PASSWORD');
       }
       //Generate jwt
-      const { username, email: emailUser, avatar, _id } = user;
-      const returnUser = { username, email: emailUser, avatar, _id };
+      const { name, email: emailUser, avatar, _id } = user;
+      const returnUser = { name, email: emailUser, avatar, _id };
 
       await this.dao.updateLoginSuccess(_id.toString());
 
@@ -151,7 +171,6 @@ export class Users {
         ...securityInfo
       },
     };
-    console.log(preparedEmail);
 
     await emailSender(preparedEmail);
 
@@ -235,12 +254,11 @@ export class Users {
     return isIncluded.length === 0;
   }
 
-  public updatePublic(_id:unknown, username:string, email:string, password:string){
+  public updatePublic(_id:unknown, email:string, password:string){
     const currentDate = new Date();
 
     const updatedUser = {
       _id,
-      username,
       email,
       password: getPassword(password),
       status: 'ACT',
@@ -273,5 +291,52 @@ export class Users {
     return this.dao.getUserById(_id);
   }
 
-}
+//VERIFICACIÓN DE CUENTA
+  public async VerifyAccount(email:string, pin:string){
+    const user = await this.dao.getUserByEmail(email);
 
+    if(!!!user){
+      console.log("Control de Cuentas: Usuario no Encontrado", `${email}`)     
+      throw new Error("Control de Cuentas: Usuario no Encontrado");
+    }
+
+    if (!user.verificationPin) {
+      console.log("Control de Cuentas: No se encontró el Token de Verificación", `${user.email}`)     
+      throw new Error("Control de Cuentas: No se encontró el Token de Verificación");
+    }
+    const {_id, verificationPin, email:emailUser, name, avatar} = user;
+    try {
+        const decoded = verify(verificationPin);
+        if ( !checkPassword(pin.toString(), decoded['verificationPin']) ) {
+            throw new Error("Pin de Verificación Incorrecto");
+        }
+        await this.dao.updateUser({_id, status:"ACT", verificationPin:""});
+        
+        const returnUser = {name, email:emailUser, avatar, _id};
+        return {...returnUser, token: sign(returnUser)}
+        
+    } catch (error) {
+        console.log("JWT-MIDDLEWARE: ", error)
+        throw new Error("El Pin de Verificación proporcionado no es válido.");
+    }
+  }
+
+  public async refreshVerificationToken(userData){
+    const {email, name, _id} = userData;
+    const verificationPin = generateRandomNumber();
+
+    const preparedEmail = {
+      email,
+      subject: 'Verificación de Cuenta',
+      templateName: 'activationtemplate', //El nombre del template que este dentro de la carpeta /config/htmlTemplates/
+      context: {
+        name: name,
+        pin: verificationPin,
+      },
+    };
+    await emailSender(preparedEmail);
+
+    return await this.dao.updateUser({_id, status:"NA", verificationPin:signOptions({verificationPin:getPassword(verificationPin.toString())}, {expiresIn:'15m'})})
+  }
+
+}

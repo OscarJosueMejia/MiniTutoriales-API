@@ -163,11 +163,39 @@ export class TutorialDao extends AbstractDao<ITutorial> {
     }
   }
 
-  public async customSearch(search:string){
+  public async customSearch(search:string, identifier:string){
     try {
-      console.log(search);
-      const result = await super.findByFilter({title:new RegExp(search)})
-      return result;
+      // const result = await super.findByFilter({title:new RegExp(search)})
+
+      const items = await super.aggregate(
+        [
+          {
+            $addFields: {
+              userLiked: {
+                $cond: {
+                  if: { $in: [identifier, '$reactionsCount.reaction_IsUtil'] },
+                  then: true,
+                  else: false,
+                },
+              },
+              userDisliked: {
+                $cond: {
+                  if: { $in: [identifier, '$reactionsCount.reaction_Dislike'] },
+                  then: true,
+                  else: false,
+                },
+              },
+              matchWithSearch: {
+                $regexMatch: { input:"$title", regex: new RegExp(search), options:'i' },
+              }
+            },
+          },
+          authorInfoRelation,
+        ],
+        {},
+      );
+
+      return items.filter(obj=>obj.matchWithSearch === true);
     } catch (ex: unknown) {
       console.log('TutorialDao mongodb:', (ex as Error).message);
       throw ex;
@@ -188,6 +216,7 @@ export class TutorialDao extends AbstractDao<ITutorial> {
         ...{categoryId: new ObjectId(categoryId as string) },
         ...newObject,
       });
+      
       return result;
     } catch (ex: unknown) {
       console.log('TutorialDao mongodb:', (ex as Error).message);
@@ -229,18 +258,19 @@ export class TutorialDao extends AbstractDao<ITutorial> {
   public async addComment(tutorialId: string, newComment: ITutorialComment) {
     try {
       const { userId, ...commentBody } = newComment;
+      const newId = new ObjectId();
       const result = await super.updateRaw(tutorialId as string, {
         $push: {
           comments: {
             ...{
-              _id: new ObjectId(),
+              _id: newId,
               userId: new ObjectId(userId as string),
             },
             ...commentBody,
           },
         },
       });
-      return result;
+      return {result, newId};
     } catch (ex: unknown) {
       console.log('TutorialDao mongodb:', (ex as Error).message);
       throw ex;

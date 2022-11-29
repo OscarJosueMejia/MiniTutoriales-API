@@ -22,7 +22,8 @@ export interface ITutorial {
 }
 
 export interface ITutorialComment{
-    _id?: unknown,
-    userId: unknown, 
-    text: string
+    _id?: unknown;
+    userId: unknown; 
+    authorName:string;
+    text: string;
 }

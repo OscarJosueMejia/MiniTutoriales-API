@@ -60,7 +60,8 @@ router.get('/list/:userId', async (req, res)=>{
 router.get('/custom/:search', async (req, res)=>{
   try {
     const { search } = req.params;
-    const tutorialList = await tutorialInstance.customSearch(search);
+    const { userId } = req.query;
+    const tutorialList = await tutorialInstance.customSearch(search, userId.toString());
     
     res.json(tutorialList);
 
@@ -131,10 +132,10 @@ router.delete('/delete/:id', async(req, res)=>{
 router.put('/comment/:id', async (req, res)=>{
   try {
     const { id } = req.params;
-    const commentBody = req.body as unknown as ITutorialComment;
-      
-    await tutorialInstance.addComment(id, commentBody);
-      res.status(200).json({"msg":"Comentario Agregado.", commentBody});
+    const {authorName, userId, text} = req.body as unknown as ITutorialComment;
+    
+    const result = await tutorialInstance.addComment(id, {authorName, userId, text});
+    res.status(200).json({"msg":"Comentario Agregado.", newId:result.newId});
 
   } catch (error) {
     res.status(500).json({error: (error as Error).message});
