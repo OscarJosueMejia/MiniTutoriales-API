@@ -11,6 +11,7 @@ const authorInfoRelation: {} = {
   },
 };
 
+
 export class TutorialDao extends AbstractDao<ITutorial> {
   public constructor(db: Db) {
     super('Tutorial', db);
@@ -146,6 +147,35 @@ export class TutorialDao extends AbstractDao<ITutorial> {
                   else: false,
                 },
               },
+            },
+          },
+          authorInfoRelation,
+          { $skip:((page-1) * itemsPerPage) },
+          { $limit: itemsPerPage },
+        ],
+        {},
+      );
+
+      return { total, totalPages, page, itemsPerPage, items };
+
+    } catch (ex: unknown) {
+      console.log('TutorialDao mongodb:', (ex as Error).message);
+      throw ex;
+    }
+  }
+
+  public async getTutorialsLikedByUser(userId: string, page:number = 1, itemsPerPage: number = 10) {
+    try {
+      const total = await super.getCollection().countDocuments({'reactionsCount.reaction_IsUtil':{$in: [userId]}})
+      const totalPages = Math.ceil(total/itemsPerPage);
+
+      const items = await super.aggregate(
+        [
+          { $match: {'reactionsCount.reaction_IsUtil':{$in: [userId]}} },
+          {
+            $addFields: {
+              userLiked: true,
+              userDisliked: false
             },
           },
           authorInfoRelation,

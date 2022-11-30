@@ -30,6 +30,10 @@ export class Tutorial {
         return this.dao.getTutorialsByUser(identifier, page, items);
     }
 
+    public getTutorialsLikedByUser(identifier:string, page:number, items:number){
+        return this.dao.getTutorialsLikedByUser(identifier, page, items);
+    }
+
     public customSearch(search:string, identifier:string){
         return this.dao.customSearch(search, identifier);
     }

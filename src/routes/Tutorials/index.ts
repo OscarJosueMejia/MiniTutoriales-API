@@ -1,8 +1,10 @@
 import {Router} from 'express';
 import { Tutorial } from '@libs/Tutorial';
+import { Users } from '@libs/Users';
 import { ITutorial, ITutorialComment } from '@models/entities/Tutorial';
 // import { commonValidator, validateInput } from '@server/utils/validator';
 const router = Router();
+const users = new Users();
 const tutorialInstance = new Tutorial("MONGODB");
 
 router.get('/one/:id', async (req, res)=>{
@@ -49,7 +51,23 @@ router.get('/list/:userId', async (req, res)=>{
     const {page, items} = {page:"1", items:"10", ...req.query};
     
     const tutorialList = await tutorialInstance.getTutorialsByUser(userId, Number(page), Number(items));
-    res.json(tutorialList);
+    const result = await users.getUsersById(userId);
+    res.json({...tutorialList, ...{userData:result}});
+
+  } catch (ex) {
+    console.error(ex);
+    res.status(503).json({error:ex});
+  }
+});
+
+router.get('/liked/:userId', async (req, res)=>{
+  try {
+    const { userId } = req.params;
+    const {page, items} = {page:"1", items:"10", ...req.query};
+    
+    const tutorialList = await tutorialInstance.getTutorialsLikedByUser(userId, Number(page), Number(items));
+    const result = await users.getUsersById(userId);
+    res.json({...tutorialList, ...{userData:result}});
 
   } catch (ex) {
     console.error(ex);
