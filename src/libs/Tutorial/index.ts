@@ -14,24 +14,28 @@ export class Tutorial {
         .catch(ex=>console.error(ex));
     }
 
-    public getTutorials(){
-        return this.dao.getTutorials();
+    public getTutorials(page:number, items:number){
+        return this.dao.getTutorials(page, items);
     }
 
-    public getTutorialsForUser(identifier:string){
-        return this.dao.getTutorialsForUser(identifier);
+    public getTutorialsForUser(identifier:string, page:number, items:number){
+        return this.dao.getTutorialsForUser(identifier, page, items);
     }
     
-    public getTutorialById(identifier:string){
-        return this.dao.getTutorialById(identifier);
+    public getTutorialById(identifier:string, userId?:string){
+        return this.dao.getTutorialById(identifier, userId);
     }
 
-    public getTutorialsByUser(identifier:string){
-        return this.dao.getTutorialsByUser(identifier);
+    public getTutorialsByUser(identifier:string, page:number, items:number){
+        return this.dao.getTutorialsByUser(identifier, page, items);
+    }
+
+    public customSearch(search:string, identifier:string){
+        return this.dao.customSearch(search, identifier);
     }
 
     public addTutorial(authorId:string, newTutorial: Partial<ITutorial>) {
-        const {categoryId, title, description, requirements, steps, tags, createdAt} = newTutorial;
+        const { categoryId, title, description, requirements, steps, tags } = newTutorial;
         return this.dao.insertNewTutorial(
             {
                 authorId,
@@ -39,25 +43,24 @@ export class Tutorial {
                 title,
                 description,
                 requirements,
+                comments:[],
                 steps,
                 reactionsCount:{reaction_IsUtil:[], reaction_Dislike:[]},
                 tags,
-                createdAt: new Date(createdAt)
+                createdAt: new Date()
             }
         );
       }
 
     public updateTutorial(updateTutorial: Partial<ITutorial>) {
-        const {_id, authorId, categoryId, title, description, requirements, steps, tags, reactionsCount} = updateTutorial;
+        const {_id, categoryId, title, description, requirements, steps, tags} = updateTutorial;
         return this.dao.updateTutorial(
             {
                 _id,
-                authorId,
                 categoryId,
                 title,
                 description,
                 requirements,
-                reactionsCount,
                 steps,
                 tags,
             }

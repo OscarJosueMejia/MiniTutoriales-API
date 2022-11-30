@@ -1,12 +1,15 @@
 import express from 'express';
-const router = express.Router();
 import { Users } from '@libs/Users';
+import { body, validationResult } from 'express-validator';
+import parser from 'ua-parser-js';
 
+const router = express.Router();
 const users = new Users();
 
-router.get('/getAll', async (_req, res)=> {
+router.get('/getAll', async (_req, res) => {
   try {
     const result = await users.getAllUsers();
+    
     res.status(200).json(result);
   } catch(ex) {
     console.log("Error:", ex);
@@ -14,19 +17,78 @@ router.get('/getAll', async (_req, res)=> {
   }
 });
 
-router.post('/signin', async (req, res)=> {
-  try {
-    const {username, email, password} = req.body;
-    console.log(username, email, password);
-    const result = await users.signin(username, email, password);
+router.post('/signin',
+  body('name').isLength({ min: 6 }).withMessage('Nombre mínimo 6 caracteres'),
+  body('email').isEmail().withMessage('Correo inválido'),
+  body('password').isStrongPassword().withMessage('Contraseña insegura'),
+  async (req, res) => {
+    try {
+      const {name, email, password, roles } = req.body;
 
-    res.status(200).json({"msg":"Usuario Creado Correctamente", result});
-  } catch(ex) {
-    console.log("Error:", ex);
-    res.status(500).json({error:"Error al crear usuario"});
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res.status(500).json({ errors: errors.array() });
+      }
+
+      let result:object;
+
+      if (!roles || roles.length === 0) {
+        result = await users.signin(name, email, password);
+      } else {
+        result = await users.signin(name, email, password, roles);
+      }
+      return res.status(200).json({ msg: 'Usuario Creado Correctamente', result });
+    } catch(error) {
+      console.log("Error:", error);
+      return res.status(403).json({error: (error as Error).message});
+    }
+  });
+
+router.post('/verifyAccount', async (req, res)=> {
+  try {
+    const {email, pin} = req.body;
+    console.log(email, pin);
+    const result = await users.VerifyAccount(email, pin);
+    res.status(200).json({"msg":"Cuenta Verificada", result});
+  } catch(error) {
+    console.log("Error:", error);
+    res.status(403).json({error: (error as Error).message});
   }
 });
 
+router.post('/login', 
+body('email').isEmail().withMessage('Correo inválido'),
+async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res.status(500).json({ errors: errors.array() });
+      }
+
+    const result = await users.login(email, password);
+
+    console.log('LOGIN:', result);
+    res.cookie('jwt', result.token, {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: false,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+    return res.status(200).json(result);
+  } catch (ex) {
+    console.log('Error:', ex);
+    return res.status(403).json({ error: 'Credenciales no son válidas' });
+  }
+});
+
+router.get('/logout', async (_req, res) => {
+  res.clearCookie('jwt');
+  res.status(200).json({ msg: 'Sesión Cerrada Correctamente.' });
+});
 router.put('/update/:id', async (req, res)=> {
   try {
     const {id} = req.params;
@@ -82,68 +144,90 @@ router.get('/profile/:id', async (req, res)=> {
 //     const {email, password} = req.body;
 //     const result = await users.login(email, password);
 
-//     console.log("LOGIN:", result);
-//     res.status(200).json(result);
+router.post('/addrole/:id', async (req, res) => {
+  try {
 
-//   } catch(ex) {
-//     console.log("Error:", ex);
-//     res.status(403).json({error:"Credenciales no son válidas"});
-//   }
-// });
+    const { id } = req.params;
+    const {role} = req.body;
 
-// router.post('/addrole/:id', async (req, res) => {
-//   try {
+    const result = await users.assignRoles(id, role);
+    console.log('ADD_ROLE ', result);
+    res.status(200).json(result);
+
+  } catch (error) {
+
+  }
+});
+
+router.post('/changePassword', 
+body('email').isEmail().withMessage('Correo inválido'),
+body('newPassword').isStrongPassword().withMessage('Contraseña insegura'),
+body('oldPassword').notEmpty().withMessage('Contraseña anterior requerida'),
+async (req, res) => {
+  try {
+    const { email, oldPassword, newPassword } = req.body;
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(500).json({ errors: errors.array() });
+    }
+
+    await users.changePassword(email, oldPassword, newPassword);
+
+    return res.status(200).json({ msg: 'Contraseña Actualizada' });
+  } catch (error) {
+    console.log('Error:', error);
+    return res.status(403).json({ error: (error as Error).message });
+  }
+});
+
+router.post('/generateRecoveryPin', 
+body('email').isEmail().withMessage('Correo inválido'),
+async (req, res) => {
+  try {
+    const { email } = req.body;
     
-//     const { id } = req.params;
-//     const {role} = req.body;
+    const errors = validationResult(req);
 
-//     const result = await users.assignRoles(id, role);
-//     console.log('ADD_ROLE ', result);
-//     res.status(200).json(result);
+    if (!errors.isEmpty()) {
+      return res.status(500).json({ errors: errors.array() });
+    }
 
-//   } catch (error) {
+    const user_agent = parser(req.headers['user-agent']);
     
-//   }
-// })
+    const result = await users.generateRecoveryCode(email, {
+      operating_system: user_agent.os.name, 
+      browser_name: user_agent.browser.name
+    });
 
-// router.post('/changePassword', async (req, res)=> {
-//   try {
-//     const {email, oldPassword, newPassword} = req.body;
+    return res.status(200).json(result);
+  } catch (error) {
+    console.log('Error:', error);
+    return res.status(403).json({ error: (error as Error).message });
+  }
+});
 
-//     await users.changePassword(email, oldPassword, newPassword);
+router.post('/recoveryChangePassword',
+body('email').isEmail().withMessage('Correo inválido'),
+body('pin').isInt({min: 100000, max: 999999}).withMessage('Pin debe ser de 6 dígitos'),
+body('newPassword').isStrongPassword().withMessage('Contraseña insegura'),
+async (req, res) => {
+  try {
+    const { email, pin, newPassword } = req.body;
 
-//     res.status(200).json({"msg":"Contraseña Actualizada"})
+    const errors = validationResult(req);
 
-//   } catch(error) {
-//     console.log("Error:", error);
-//     res.status(403).json({error: (error as Error).message});
-//   }
-// });
+    if (!errors.isEmpty()) {
+      return res.status(500).json({ errors: errors.array() });
+    }
 
-// router.post('/generateRecoveryPin', async (req, res)=> {
-//   try {
-//     const {email} = req.body;
-//     const result = await users.generateRecoveryCode(email);
-
-//     res.status(200).json(result);
-
-//   } catch(error) {
-//     console.log("Error:", error);
-//     res.status(403).json({error: (error as Error).message});
-//   }
-// });
-
-// router.post('/recoveryChangePassword', async (req, res)=> {
-//   try {
-//     const {email, pin, newPassword} = req.body;
-
-//     await users.verifyRecoveryData(email, pin, newPassword);
-//     res.status(200).json({"msg":"Contraseña Actualizada"})
-
-//   } catch(error) {
-//     console.log("Error:", error);
-//     res.status(403).json({error: (error as Error).message});
-//   }
-// });
+    await users.verifyRecoveryData(email, pin, newPassword);
+    return res.status(200).json({ msg: 'Contraseña Actualizada' });
+  } catch (error) {
+    console.log('Error:', error);
+    return res.status(403).json({ error: (error as Error).message });
+  }
+});
 
 export default router;
