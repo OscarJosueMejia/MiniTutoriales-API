@@ -21,7 +21,7 @@ export class Users {
     return this.dao.getAllUsers();
   }
 
-  public async signin(name:string, email:string, password:string, roles:[string]=['public']) {
+  public async signin(name:string, email:string, password:string, rol:string='public') {
     const currentDate = new Date();
     const verificationPin = generateRandomNumber();
     const EmailExistent = await this.dao.getUserByEmail(email);
@@ -39,7 +39,7 @@ export class Users {
         lastLogin: currentDate,
         verificationPin:signOptions({verificationPin:getPassword(verificationPin.toString())}, {expiresIn:'15m'}),
         avatar: '',
-        roles: roles,
+        rol: rol,
         _id: null,
       };
   
