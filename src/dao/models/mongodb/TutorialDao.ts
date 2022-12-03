@@ -4,13 +4,15 @@ import { Db, ObjectId } from 'mongodb';
 
 const authorInfoRelation: {} = {
   $lookup: {
-    from: 'User',
+    from: 'users',
     localField: 'authorId',
     foreignField: '_id',
     as: 'author_info',
+    pipeline: [
+      { $project: { _id: 1, name: 1, email:1, avatar:1 } }
+   ],
   },
 };
-
 
 export class TutorialDao extends AbstractDao<ITutorial> {
   public constructor(db: Db) {
@@ -123,7 +125,7 @@ export class TutorialDao extends AbstractDao<ITutorial> {
    * @description Retorna los tutoriales pertenecientes a un usuario.
    * @returns array<ITutorial>
    */
-  public async getTutorialsByUser(identifier: string, page:number = 1, itemsPerPage: number = 10) {
+  public async getTutorialsByUser(identifier: string, page:number = 1, itemsPerPage: number = 10, currentUser?:string) {
     try {
       const total = await super.getCollection().countDocuments({authorId: new ObjectId(identifier)})
       const totalPages = Math.ceil(total/itemsPerPage);
@@ -135,14 +137,14 @@ export class TutorialDao extends AbstractDao<ITutorial> {
             $addFields: {
               userLiked: {
                 $cond: {
-                  if: { $in: [identifier, '$reactionsCount.reaction_IsUtil'] },
+                  if: { $in: [currentUser, '$reactionsCount.reaction_IsUtil'] },
                   then: true,
                   else: false,
                 },
               },
               userDisliked: {
                 $cond: {
-                  if: { $in: [identifier, '$reactionsCount.reaction_Dislike'] },
+                  if: { $in: [currentUser, '$reactionsCount.reaction_Dislike'] },
                   then: true,
                   else: false,
                 },
@@ -176,6 +178,47 @@ export class TutorialDao extends AbstractDao<ITutorial> {
             $addFields: {
               userLiked: true,
               userDisliked: false
+            },
+          },
+          authorInfoRelation,
+          { $skip:((page-1) * itemsPerPage) },
+          { $limit: itemsPerPage },
+        ],
+        {},
+      );
+
+      return { total, totalPages, page, itemsPerPage, items };
+
+    } catch (ex: unknown) {
+      console.log('TutorialDao mongodb:', (ex as Error).message);
+      throw ex;
+    }
+  }
+
+  public async getTutorialsByCategory(categoryId:string, userId: string, page:number = 1, itemsPerPage: number = 10) {
+    try {
+      const total = await super.getCollection().countDocuments({'reactionsCount.reaction_IsUtil':{$in: [userId]}})
+      const totalPages = Math.ceil(total/itemsPerPage);
+      
+      const items = await super.aggregate(
+        [
+          { $match: {'tags':{$in: [categoryId]}} },
+          {
+            $addFields: {
+              userLiked: {
+                $cond: {
+                  if: { $in: [userId, '$reactionsCount.reaction_IsUtil'] },
+                  then: true,
+                  else: false,
+                },
+              },
+              userDisliked: {
+                $cond: {
+                  if: { $in: [userId, '$reactionsCount.reaction_Dislike'] },
+                  then: true,
+                  else: false,
+                },
+              },
             },
           },
           authorInfoRelation,

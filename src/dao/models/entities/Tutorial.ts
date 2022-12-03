@@ -15,9 +15,7 @@ export interface ITutorial {
         reaction_Dislike: Array<string>
     };
     comments?: Array<ITutorialComment>;
-    tags: Array<{ 
-        tagDescription:string
-    }>;
+    tags: Array<string>;
     createdAt:Date;
 }
 

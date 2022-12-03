@@ -9,7 +9,7 @@ export interface IUser {
     verificationPin?:string;
     created: Date,
     updated: Date,
-    avatar?: string,
+    avatar?: string | number,
     failedAttempts?: number,
     lastLogin?: Date,
     roles:string[],

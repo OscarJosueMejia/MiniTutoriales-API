@@ -26,12 +26,16 @@ export class Tutorial {
         return this.dao.getTutorialById(identifier, userId);
     }
 
-    public getTutorialsByUser(identifier:string, page:number, items:number){
-        return this.dao.getTutorialsByUser(identifier, page, items);
+    public getTutorialsByUser(identifier:string, page:number, items:number, currentUser?:string){
+        return this.dao.getTutorialsByUser(identifier, page, items, currentUser);
     }
 
     public getTutorialsLikedByUser(identifier:string, page:number, items:number){
         return this.dao.getTutorialsLikedByUser(identifier, page, items);
+    }
+
+    public getTutorialsByCategory(categoryId:string, identifier:string, page:number, items:number){
+        return this.dao.getTutorialsByCategory(categoryId, identifier, page, items);
     }
 
     public customSearch(search:string, identifier:string){

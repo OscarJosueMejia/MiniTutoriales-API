@@ -25,7 +25,8 @@ export class Users {
     const currentDate = new Date();
     const verificationPin = generateRandomNumber();
     const EmailExistent = await this.dao.getUserByEmail(email);
-
+    const avatarId = Math.floor(Math.random() * 10);
+    
     if(!EmailExistent){
       const newUser = {
         name,
@@ -38,7 +39,7 @@ export class Users {
         failedAttempts: 0,
         lastLogin: currentDate,
         verificationPin:signOptions({verificationPin:getPassword(verificationPin.toString())}, {expiresIn:'15m'}),
-        avatar: '',
+        avatar: avatarId,
         roles: roles,
         _id: null,
       };

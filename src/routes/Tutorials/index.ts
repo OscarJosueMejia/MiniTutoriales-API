@@ -45,14 +45,21 @@ router.get('/logged_user/:userId', async (req, res)=>{
   }
 });
 
-router.get('/list/:userId', async (req, res)=>{
+router.get('/list/:userId/:mode/:currentUser', async (req, res)=>{
   try {
-    const { userId } = req.params;
-    const {page, items} = {page:"1", items:"10", ...req.query};
+    const { userId, mode, currentUser} = req.params;
+    const {page, items } = {page:"1", items:"10", ...req.query};
     
-    const tutorialList = await tutorialInstance.getTutorialsByUser(userId, Number(page), Number(items));
-    const result = await users.getUsersById(userId);
-    res.json({...tutorialList, ...{userData:result}});
+    let tutorialList;
+    
+    if (mode !== undefined && mode === "LIKED") {
+      tutorialList = await tutorialInstance.getTutorialsLikedByUser(userId, Number(page), Number(items));
+    }else{
+      tutorialList = await tutorialInstance.getTutorialsByUser(userId, Number(page), Number(items), currentUser);
+    }
+    const {avatar, email, _id} = await users.getUsersById(userId);
+
+    res.json({...tutorialList, ...{userData:{avatar, email, _id}}});
 
   } catch (ex) {
     console.error(ex);
@@ -60,20 +67,20 @@ router.get('/list/:userId', async (req, res)=>{
   }
 });
 
-router.get('/liked/:userId', async (req, res)=>{
+router.get('/byCategory/:categoryId/:userId', async (req, res)=>{
   try {
-    const { userId } = req.params;
-    const {page, items} = {page:"1", items:"10", ...req.query};
+    const { categoryId, userId } = req.params;
+    const { page, items } = {page:"1", items:"10", ...req.query};
     
-    const tutorialList = await tutorialInstance.getTutorialsLikedByUser(userId, Number(page), Number(items));
-    const result = await users.getUsersById(userId);
-    res.json({...tutorialList, ...{userData:result}});
+    const tutorialList = await tutorialInstance.getTutorialsByCategory(categoryId, userId, Number(page), Number(items));
+    res.json(tutorialList);
 
   } catch (ex) {
     console.error(ex);
     res.status(503).json({error:ex});
   }
 });
+
 
 router.get('/custom/:search', async (req, res)=>{
   try {
