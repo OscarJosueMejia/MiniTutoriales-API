@@ -4,7 +4,7 @@ export interface ITutorial {
     categoryId: unknown;
     title: string;
     description: string;
-    requirements: string;
+    requirements: Array<string>;
     steps: Array<{
         stepNumber:number,
         description: string,
@@ -22,7 +22,8 @@ export interface ITutorial {
 }
 
 export interface ITutorialComment{
-    _id?: unknown,
-    userId: unknown, 
-    text: string
+    _id?: unknown;
+    userId: unknown; 
+    authorName:string;
+    text: string;
 }

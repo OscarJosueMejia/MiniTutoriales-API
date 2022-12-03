@@ -1,15 +1,18 @@
 import {Router} from 'express';
 import { Tutorial } from '@libs/Tutorial';
+import { Users } from '@libs/Users';
 import { ITutorial, ITutorialComment } from '@models/entities/Tutorial';
 // import { commonValidator, validateInput } from '@server/utils/validator';
 const router = Router();
+const users = new Users();
 const tutorialInstance = new Tutorial("MONGODB");
 
 router.get('/one/:id', async (req, res)=>{
   try {
     const { id } = req.params;
-    const tutorialDetails = await tutorialInstance.getTutorialById(id);
-    res.json(tutorialDetails);
+    const { userId } = req.query;
+    const tutorialDetails = await tutorialInstance.getTutorialById(id, userId as string);
+    res.json(tutorialDetails[0]);
 
   } catch (ex) {
     console.error(ex);
@@ -48,7 +51,23 @@ router.get('/list/:userId', async (req, res)=>{
     const {page, items} = {page:"1", items:"10", ...req.query};
     
     const tutorialList = await tutorialInstance.getTutorialsByUser(userId, Number(page), Number(items));
-    res.json(tutorialList);
+    const result = await users.getUsersById(userId);
+    res.json({...tutorialList, ...{userData:result}});
+
+  } catch (ex) {
+    console.error(ex);
+    res.status(503).json({error:ex});
+  }
+});
+
+router.get('/liked/:userId', async (req, res)=>{
+  try {
+    const { userId } = req.params;
+    const {page, items} = {page:"1", items:"10", ...req.query};
+    
+    const tutorialList = await tutorialInstance.getTutorialsLikedByUser(userId, Number(page), Number(items));
+    const result = await users.getUsersById(userId);
+    res.json({...tutorialList, ...{userData:result}});
 
   } catch (ex) {
     console.error(ex);
@@ -59,7 +78,8 @@ router.get('/list/:userId', async (req, res)=>{
 router.get('/custom/:search', async (req, res)=>{
   try {
     const { search } = req.params;
-    const tutorialList = await tutorialInstance.customSearch(search);
+    const { userId } = req.query;
+    const tutorialList = await tutorialInstance.customSearch(search, userId.toString());
     
     res.json(tutorialList);
 
@@ -98,13 +118,14 @@ router.put('/update/:id', async (req, res)=>{
   try {
     const { id } = req.params;
     const {steps, tags, ...updateTutorial } = req.body as unknown as ITutorial;
-    const categoryIdV = updateTutorial.categoryId as string;
+    // const categoryIdV = updateTutorial.categoryId as string;
     
-    if (categoryIdV.length === 0 || updateTutorial.description.length === 0 || updateTutorial.requirements.length === 0 || updateTutorial.title.length === 0) {
+    // if (categoryIdV.length === 0 || updateTutorial.description.length === 0 || updateTutorial.requirements.length === 0 || updateTutorial.title.length === 0) {
+    if (updateTutorial.description.length === 0 || updateTutorial.requirements.length === 0 || updateTutorial.title.length === 0) {
       res.status(500).json({error: "'Complete all the fields'"});
     } else {
       if (steps.length > 0 && tags.length > 0) {
-        await tutorialInstance.updateTutorial({...{_id:id}, ...updateTutorial});
+        await tutorialInstance.updateTutorial({...{_id:id}, steps, tags, ...updateTutorial});
         res.status(200).json({"msg":"Registro Actualizado."});
       }
       else{
@@ -129,10 +150,10 @@ router.delete('/delete/:id', async(req, res)=>{
 router.put('/comment/:id', async (req, res)=>{
   try {
     const { id } = req.params;
-    const commentBody = req.body as unknown as ITutorialComment;
-      
-    await tutorialInstance.addComment(id, commentBody);
-      res.status(200).json({"msg":"Comentario Agregado.", commentBody});
+    const {authorName, userId, text} = req.body as unknown as ITutorialComment;
+    
+    const result = await tutorialInstance.addComment(id, {authorName, userId, text});
+    res.status(200).json({"msg":"Comentario Agregado.", newId:result.newId});
 
   } catch (error) {
     res.status(500).json({error: (error as Error).message});
@@ -157,11 +178,11 @@ router.put('/reaction/:id', async (req, res)=>{
     const reactionInfo = req.body as unknown as {reactionName:"LIKE"|"DISLIKE", userId: string, mode: "ADD"|"REMOVE"};
     
     const result = await tutorialInstance.reactionHandler(id, reactionInfo);
-    
+
     if (!result) {
       res.status(406).json({"error":"Interaction Already Registered or Nothing to remove."});
     }else{
-      res.status(200).json({"msg":"Interacción Registrada."});
+      res.status(200).json({"msg":"Interacción Registrada"});
     }
   } catch (error) {
     res.status(500).json({error: (error as Error).message});

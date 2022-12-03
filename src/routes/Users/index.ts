@@ -17,14 +17,13 @@ router.get('/getAll', async (_req, res) => {
   }
 });
 
-router.post(
-  '/signin',
+router.post('/signin',
+  body('name').isLength({ min: 6 }).withMessage('Nombre mínimo 6 caracteres'),
   body('email').isEmail().withMessage('Correo inválido'),
-  body('username').isLength({ min: 6 }).withMessage('Usuario mínimo 6 caracteres'),
   body('password').isStrongPassword().withMessage('Contraseña insegura'),
   async (req, res) => {
     try {
-      const { username, email, password, rol } = req.body;
+      const { name, email, password, rol } = req.body;
 
       const errors = validationResult(req);
 
@@ -35,17 +34,28 @@ router.post(
       let result:object;
 
       if (!rol || rol.length === 0) {
-        result = await users.signin(username, email, password);
+        result = await users.signin(name, email, password);
       } else {
-        result = await users.signin(username, email, password, rol);
+        result = await users.signin(name, email, password, rol);
       }
       return res.status(200).json({ msg: 'Usuario Creado Correctamente', result });
-    } catch (ex) {
-      console.log('Error:', ex);
-      return res.status(500).json({ error: 'Error al crear usuario' });
+    } catch(error) {
+      console.log("Error:", error);
+      return res.status(403).json({error: (error as Error).message});
     }
-  },
-);
+  });
+
+router.post('/verifyAccount', async (req, res)=> {
+  try {
+    const {email, pin} = req.body;
+    console.log(email, pin);
+    const result = await users.VerifyAccount(email, pin);
+    res.status(200).json({"msg":"Cuenta Verificada", result});
+  } catch(error) {
+    console.log("Error:", error);
+    res.status(403).json({error: (error as Error).message});
+  }
+});
 
 router.post('/login', 
 body('email').isEmail().withMessage('Correo inválido'),
@@ -82,9 +92,8 @@ router.get('/logout', async (_req, res) => {
 router.put('/update/:id', async (req, res)=> {
   try {
     const {id} = req.params;
-    const {username, email, password} = req.body;
-    console.log(username, email);
-    const result = await users.updatePublic(id,username, email, password);    
+    const { email, password} = req.body;
+    const result = await users.updatePublic(id, email, password);    
 
     res.status(200).json({"msg":"Usuario Actualizado Correctamente", result});
   } catch(ex) {
