@@ -57,9 +57,9 @@ router.get('/list/:userId/:mode/:currentUser', async (req, res)=>{
     }else{
       tutorialList = await tutorialInstance.getTutorialsByUser(userId, Number(page), Number(items), currentUser);
     }
-    const {avatar, email, _id} = await users.getUsersById(userId);
+    const {avatar, name, email, _id} = await users.getUsersById(userId);
 
-    res.json({...tutorialList, ...{userData:{avatar, email, _id}}});
+    res.json({...tutorialList, ...{userData:{avatar, name, email, _id}}});
 
   } catch (ex) {
     console.error(ex);

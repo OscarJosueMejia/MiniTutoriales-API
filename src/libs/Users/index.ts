@@ -17,8 +17,8 @@ export class Users {
       .catch((ex) => console.error(ex));
   }
 
-  public getAllUsers() {
-    return this.dao.getAllUsers();
+  public getAllUsers(page:number, items:number) {
+    return this.dao.getAllUsers(page, items);
   }
 
   public async signin(name:string, email:string, password:string, rol:string='public') {
@@ -86,8 +86,8 @@ export class Users {
         throw new Error('LOGIN INVALID PASSWORD');
       }
       //Generate jwt
-      const { name, email: emailUser, avatar, _id } = user;
-      const returnUser = { name, email: emailUser, avatar, _id };
+      const { name, email: emailUser, avatar, _id, rol} = user;
+      const returnUser = { name, email: emailUser, avatar, _id, rol };
 
       await this.dao.updateLoginSuccess(_id.toString());
 
@@ -287,12 +287,11 @@ export class Users {
     return this.dao.updateUser(updatedUser);
   }
 
-  public updateStatus(_id:unknown){
+  public updateStatus(_id:unknown, status:string){
     const currentDate = new Date();
-    
     const updatedUser = {
       _id,
-      status: 'INA',
+      status,
       updated: currentDate
     };
     return this.dao.updateStatusUser(updatedUser);

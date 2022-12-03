@@ -6,14 +6,15 @@ import parser from 'ua-parser-js';
 const router = express.Router();
 const users = new Users();
 
-router.get('/getAll', async (_req, res) => {
+router.get('/getAll', async (req, res) => {
   try {
-    const result = await users.getAllUsers();
+    const {page, items} = {page:"1", items:"10", ...req.query};
+    const result = await users.getAllUsers(Number(page), Number(items));
     
     res.status(200).json(result);
   } catch (ex) {
     console.log('Error:', ex);
-    res.status(500).json({ error: 'Error al crear usuario' });
+    res.status(500).json({ error: 'Error al listar usuarios' });
   }
 });
 
@@ -102,12 +103,13 @@ router.put('/update/:id', async (req, res)=> {
   }
 });
 
-router.put('/delete/:id', async (req, res)=>{
+router.put('/updateStatus/:id/:status', async (req, res)=>{
   try {
-    const {id} = req.params;
-    const idC = (/^\d*$/.test(id))?+id:id;
-    await users.updateStatus(idC as string);
-    res.status(200).json({"msg":"Registro Eliminado"});
+    const { id, status } = req.params;
+    
+    await users.updateStatus(id as string, status);
+
+    res.status(200).json({"msg":"Registro Actualizado"});
   } catch(error) {
     res.status(500).json({error: (error as Error).message});
   }
