@@ -24,7 +24,7 @@ router.post(
   body('password').isStrongPassword().withMessage('Contraseña insegura'),
   async (req, res) => {
     try {
-      const { username, email, password, roles } = req.body;
+      const { username, email, password, rol } = req.body;
 
       const errors = validationResult(req);
 
@@ -34,10 +34,10 @@ router.post(
 
       let result:object;
 
-      if (!roles || roles.length === 0) {
+      if (!rol || rol.length === 0) {
         result = await users.signin(username, email, password);
       } else {
-        result = await users.signin(username, email, password, roles);
+        result = await users.signin(username, email, password, rol);
       }
       return res.status(200).json({ msg: 'Usuario Creado Correctamente', result });
     } catch (ex) {
@@ -200,6 +200,27 @@ async (req, res) => {
 
     await users.verifyRecoveryData(email, pin, newPassword);
     return res.status(200).json({ msg: 'Contraseña Actualizada' });
+  } catch (error) {
+    console.log('Error:', error);
+    return res.status(403).json({ error: (error as Error).message });
+  }
+});
+
+router.post('/verifyRecoveryPin',
+body('email').isEmail().withMessage('Correo inválido'),
+body('pin').isInt({min: 100000, max: 999999}).withMessage('Pin debe ser de 6 dígitos'),
+async (req, res) => {
+  try {
+    const { email, pin } = req.body;
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(500).json({ errors: errors.array() });
+    }
+
+    await users.verifyRecoveryPin(pin, email);
+    return res.status(200).json({ msg: 'Pin Correcto' });
   } catch (error) {
     console.log('Error:', error);
     return res.status(403).json({ error: (error as Error).message });

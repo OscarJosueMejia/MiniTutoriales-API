@@ -11,6 +11,6 @@ export interface IUser {
     avatar?: string,
     failedAttempts?: number,
     lastLogin?: Date,
-    roles:string[],
+    rol:string,
     _id?: unknown
   }

@@ -21,7 +21,7 @@ export class Users {
     return this.dao.getAllUsers();
   }
 
-  public signin(username: string, email: string, password: string, roles:[string]=['public']) {
+  public signin(username: string, email: string, password: string, rol:string="public") {
     const currentDate = new Date();
     const newUser = {
       username,
@@ -34,7 +34,7 @@ export class Users {
       failedAttempts: 0,
       lastLogin: currentDate,
       avatar: '',
-      roles: roles,
+      rol: rol,
       _id: null,
     };
     return this.dao.createUser(newUser);
@@ -65,8 +65,8 @@ export class Users {
         throw new Error('LOGIN INVALID PASSWORD');
       }
       //Generate jwt
-      const { username, email: emailUser, avatar, _id } = user;
-      const returnUser = { username, email: emailUser, avatar, _id };
+      const { username, email: emailUser, avatar, rol, _id } = user;
+      const returnUser = { username, email: emailUser, avatar, rol, _id };
 
       await this.dao.updateLoginSuccess(_id.toString());
 
@@ -188,14 +188,14 @@ export class Users {
         'Password Change: New password was previously used.',
         `${user.email}`,
       );
-      throw new Error('New password was previously used.');
+      throw new Error('La contraseña ya fue usada previamente');
     }
     if (checkPassword(newPassword, user.password)) {
       console.log(
         'Password Change: Current Password must not be the same as New Password.',
         `${user.email}`,
       );
-      throw new Error('Current Password must not be the same as New Password.');
+      throw new Error('La nueva contraseña no puede ser la actual');
     }
     if (newPassword.length < 8) {
       console.log(
@@ -222,6 +222,20 @@ export class Users {
         password: getPassword(newPassword),
         oldPasswords,
       });
+    } catch (error) {
+      console.log('JWT-MIDDLEWARE: ', error);
+      throw new Error('Token Inválido');
+    }
+  }
+
+  public async verifyRecoveryPin(pin: string, email:string){
+    const user = await this.dao.getUserByEmail(email);
+    const { passwordChangeToken } = user;
+    try {
+      const decoded = verify(passwordChangeToken);
+      if (decoded['pin'] !== parseInt(pin)) {
+        throw new Error('INVALID RECOVERY PIN');
+      }
     } catch (error) {
       console.log('JWT-MIDDLEWARE: ', error);
       throw new Error('Invalid Token');
