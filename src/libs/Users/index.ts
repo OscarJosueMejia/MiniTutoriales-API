@@ -21,7 +21,7 @@ export class Users {
     return this.dao.getAllUsers();
   }
 
-  public async signin(name:string, email:string, password:string, roles:[string]=['public']) {
+  public async signin(name:string, email:string, password:string, rol:string='public') {
     const currentDate = new Date();
     const verificationPin = generateRandomNumber();
     const EmailExistent = await this.dao.getUserByEmail(email);
@@ -40,7 +40,7 @@ export class Users {
         lastLogin: currentDate,
         verificationPin:signOptions({verificationPin:getPassword(verificationPin.toString())}, {expiresIn:'15m'}),
         avatar: avatarId,
-        roles: roles,
+        rol: rol,
         _id: null,
       };
   
@@ -208,14 +208,14 @@ export class Users {
         'Password Change: New password was previously used.',
         `${user.email}`,
       );
-      throw new Error('New password was previously used.');
+      throw new Error('La contraseña ya fue usada previamente');
     }
     if (checkPassword(newPassword, user.password)) {
       console.log(
         'Password Change: Current Password must not be the same as New Password.',
         `${user.email}`,
       );
-      throw new Error('Current Password must not be the same as New Password.');
+      throw new Error('La nueva contraseña no puede ser la actual');
     }
     if (newPassword.length < 8) {
       console.log(
@@ -242,6 +242,20 @@ export class Users {
         password: getPassword(newPassword),
         oldPasswords,
       });
+    } catch (error) {
+      console.log('JWT-MIDDLEWARE: ', error);
+      throw new Error('Token Inválido');
+    }
+  }
+
+  public async verifyRecoveryPin(pin: string, email:string){
+    const user = await this.dao.getUserByEmail(email);
+    const { passwordChangeToken } = user;
+    try {
+      const decoded = verify(passwordChangeToken);
+      if (decoded['pin'] !== parseInt(pin)) {
+        throw new Error('INVALID RECOVERY PIN');
+      }
     } catch (error) {
       console.log('JWT-MIDDLEWARE: ', error);
       throw new Error('Invalid Token');
