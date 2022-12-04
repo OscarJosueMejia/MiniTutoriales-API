@@ -1,7 +1,6 @@
 export interface ITutorial {
     _id?: unknown; 
     authorId: unknown;
-    categoryId: unknown;
     title: string;
     description: string;
     requirements: Array<string>;

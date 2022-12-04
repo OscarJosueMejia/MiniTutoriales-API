@@ -81,7 +81,6 @@ router.get('/byCategory/:categoryId/:userId', async (req, res)=>{
   }
 });
 
-
 router.get('/custom', async (req, res)=>{
   try {
     const { userId, search } = req.query;
@@ -99,11 +98,9 @@ router.post('/add/:userId', async (req, res)=>{
   try {
     const { userId } = req.params;
     const { steps, tags, ...insertObject } = req.body as unknown as ITutorial;
-    const categoryIdV = insertObject.categoryId as string;
 
     //Check if user id exists.
-
-    if (categoryIdV.length === 0 || insertObject.description.length === 0 || insertObject.requirements.length === 0 || insertObject.title.length === 0) {
+    if (insertObject.description.length === 0 || insertObject.requirements.length === 0 || insertObject.title.length === 0) {
       res.status(500).json({error: "'Complete all the fields'"});
     } else {
       if (steps.length > 0 && tags.length > 0) {
@@ -124,9 +121,7 @@ router.put('/update/:id', async (req, res)=>{
   try {
     const { id } = req.params;
     const {steps, tags, ...updateTutorial } = req.body as unknown as ITutorial;
-    // const categoryIdV = updateTutorial.categoryId as string;
     
-    // if (categoryIdV.length === 0 || updateTutorial.description.length === 0 || updateTutorial.requirements.length === 0 || updateTutorial.title.length === 0) {
     if (updateTutorial.description.length === 0 || updateTutorial.requirements.length === 0 || updateTutorial.title.length === 0) {
       res.status(500).json({error: "'Complete all the fields'"});
     } else {
