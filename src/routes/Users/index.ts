@@ -2,11 +2,12 @@ import express from 'express';
 import { Users } from '@libs/Users';
 import { body, validationResult } from 'express-validator';
 import parser from 'ua-parser-js';
+import { jwtValidator } from '@server/middleware/jwtBearerValidator';
 
 const router = express.Router();
 const users = new Users();
 
-router.get('/getAll', async (req, res) => {
+router.get('/getAll', jwtValidator, async (req, res) => {
   try {
     const {page, items, search} = {page:"1", items:"10", search:"", ...req.query};
     const result = await users.getAllUsers(Number(page), Number(items), search.toString());
@@ -103,7 +104,7 @@ router.put('/update/:id', async (req, res)=> {
   }
 });
 
-router.put('/updateStatus/:id/:status', async (req, res)=>{
+router.put('/updateStatus/:id/:status', jwtValidator, async (req, res)=>{
   try {
     const { id, status } = req.params;
     
