@@ -17,15 +17,16 @@ export class Users {
       .catch((ex) => console.error(ex));
   }
 
-  public getAllUsers() {
-    return this.dao.getAllUsers();
+  public getAllUsers(page:number, items:number, search:string) {
+    return this.dao.getAllUsers(page, items, search);
   }
 
-  public async signin(name:string, email:string, password:string, roles:[string]=['public']) {
+  public async signin(name:string, email:string, password:string, rol:string='public') {
     const currentDate = new Date();
     const verificationPin = generateRandomNumber();
     const EmailExistent = await this.dao.getUserByEmail(email);
-
+    const avatarId = Math.floor(Math.random() * 10);
+    
     if(!EmailExistent){
       const newUser = {
         name,
@@ -38,8 +39,8 @@ export class Users {
         failedAttempts: 0,
         lastLogin: currentDate,
         verificationPin:signOptions({verificationPin:getPassword(verificationPin.toString())}, {expiresIn:'15m'}),
-        avatar: '',
-        roles: roles,
+        avatar: avatarId,
+        rol: rol,
         _id: null,
       };
   
@@ -85,8 +86,8 @@ export class Users {
         throw new Error('LOGIN INVALID PASSWORD');
       }
       //Generate jwt
-      const { name, email: emailUser, avatar, _id } = user;
-      const returnUser = { name, email: emailUser, avatar, _id };
+      const { name, email: emailUser, avatar, _id, rol} = user;
+      const returnUser = { name, email: emailUser, avatar, _id, rol };
 
       await this.dao.updateLoginSuccess(_id.toString());
 
@@ -207,14 +208,14 @@ export class Users {
         'Password Change: New password was previously used.',
         `${user.email}`,
       );
-      throw new Error('New password was previously used.');
+      throw new Error('La contraseña ya fue usada previamente');
     }
     if (checkPassword(newPassword, user.password)) {
       console.log(
         'Password Change: Current Password must not be the same as New Password.',
         `${user.email}`,
       );
-      throw new Error('Current Password must not be the same as New Password.');
+      throw new Error('La nueva contraseña no puede ser la actual');
     }
     if (newPassword.length < 8) {
       console.log(
@@ -243,6 +244,20 @@ export class Users {
       });
     } catch (error) {
       console.log('JWT-MIDDLEWARE: ', error);
+      throw new Error('Token Inválido');
+    }
+  }
+
+  public async verifyRecoveryPin(pin: string, email:string){
+    const user = await this.dao.getUserByEmail(email);
+    const { passwordChangeToken } = user;
+    try {
+      const decoded = verify(passwordChangeToken);
+      if (decoded['pin'] !== parseInt(pin)) {
+        throw new Error('INVALID RECOVERY PIN');
+      }
+    } catch (error) {
+      console.log('JWT-MIDDLEWARE: ', error);
       throw new Error('Invalid Token');
     }
   }
@@ -254,7 +269,7 @@ export class Users {
     return isIncluded.length === 0;
   }
 
-  public updatePublic(_id:unknown, email:string, password:string){
+  public updatePublic(_id:unknown, email:string){
     const currentDate = new Date();
 
     const updatedUser = {
@@ -263,54 +278,16 @@ export class Users {
       status: 'ACT',
       updated: currentDate,
       failedAttempts:0,
-      avatar,
       roles:['public']
     };
     return this.dao.updateUser(updatedUser);
   }
 
-  public async changePassword(email, oldPassword, newPassword){
-    const user = await this.dao.getUserByEmail(email);
-    
-    if(!!!user){
-      console.log("Password Change: Usuario No Encontrado", `${email}`)     
-      throw new Error("Password Change Usuario No Encontrado");
-      }
-    if (!this.checkOldPassword(user.oldPasswords, newPassword)) {
-      console.log("Password Change: New password was previously used.", `${user.email}`)     
-      throw new Error("New password was previously used.");
-      }
-    if (!checkPassword(oldPassword, user.password)) {
-      console.log("Password Change: Current passwords does not match.", `${user.email}`)     
-      throw new Error("Current passwords does not match.");
-      }
-      if (oldPassword === newPassword) {
-      console.log("Password Change: Current Password must not be the same as New Password.", `${user.email}`)     
-      throw new Error("Current Password must not be the same as New Password.");
-      }
-    
-      const { _id, password } = user;
-      let {oldPasswords} = user;
-    
-      oldPasswords.push(getPassword(password));
-    
-    return this.dao.updateUser({_id, password:getPassword(newPassword), oldPasswords});
-
-    }
-
-  public checkOldPassword(oldPasswords, newPassword:string){
-    let isIncluded = oldPasswords.filter(function(value){
-    return checkPassword(newPassword, value);
-    })
-    return isIncluded.length === 0;
-    }
-
-  public updateStatus(_id:unknown){
+  public updateStatus(_id:unknown, status:string){
     const currentDate = new Date();
-    
     const updatedUser = {
       _id,
-      status: 'INA',
+      status,
       updated: currentDate
     };
     return this.dao.updateStatusUser(updatedUser);
@@ -337,7 +314,7 @@ export class Users {
       console.log("Control de Cuentas: No se encontró el Token de Verificación", `${user.email}`)     
       throw new Error("Control de Cuentas: No se encontró el Token de Verificación");
     }
-    const {_id, verificationPin, email:emailUser, name, avatar} = user;
+    const {_id, verificationPin, email:emailUser, name, avatar, rol} = user;
     try {
         const decoded = verify(verificationPin);
         if ( !checkPassword(pin.toString(), decoded['verificationPin']) ) {
@@ -345,7 +322,7 @@ export class Users {
         }
         await this.dao.updateUser({_id, status:"ACT", verificationPin:""});
         
-        const returnUser = {name, email:emailUser, avatar, _id};
+        const returnUser = { name, email: emailUser, avatar, _id, rol };
         return {...returnUser, token: sign(returnUser)}
         
     } catch (error) {

@@ -1,8 +1,10 @@
 import {Router} from 'express';
 import { Tutorial } from '@libs/Tutorial';
+import { Users } from '@libs/Users';
 import { ITutorial, ITutorialComment } from '@models/entities/Tutorial';
 // import { commonValidator, validateInput } from '@server/utils/validator';
 const router = Router();
+const users = new Users();
 const tutorialInstance = new Tutorial("MONGODB");
 
 router.get('/one/:id', async (req, res)=>{
@@ -43,12 +45,34 @@ router.get('/logged_user/:userId', async (req, res)=>{
   }
 });
 
-router.get('/list/:userId', async (req, res)=>{
+router.get('/list/:userId/:mode/:currentUser', async (req, res)=>{
   try {
-    const { userId } = req.params;
-    const {page, items} = {page:"1", items:"10", ...req.query};
+    const { userId, mode, currentUser} = req.params;
+    const {page, items } = {page:"1", items:"10", ...req.query};
     
-    const tutorialList = await tutorialInstance.getTutorialsByUser(userId, Number(page), Number(items));
+    let tutorialList;
+    
+    if (mode !== undefined && mode === "LIKED") {
+      tutorialList = await tutorialInstance.getTutorialsLikedByUser(userId, Number(page), Number(items));
+    }else{
+      tutorialList = await tutorialInstance.getTutorialsByUser(userId, Number(page), Number(items), currentUser);
+    }
+    const {avatar, name, email, _id} = await users.getUsersById(userId);
+
+    res.json({...tutorialList, ...{userData:{avatar, name, email, _id}}});
+
+  } catch (ex) {
+    console.error(ex);
+    res.status(503).json({error:ex});
+  }
+});
+
+router.get('/byCategory/:categoryId/:userId', async (req, res)=>{
+  try {
+    const { categoryId, userId } = req.params;
+    const { page, items } = {page:"1", items:"10", ...req.query};
+    
+    const tutorialList = await tutorialInstance.getTutorialsByCategory(categoryId, userId, Number(page), Number(items));
     res.json(tutorialList);
 
   } catch (ex) {
@@ -57,11 +81,11 @@ router.get('/list/:userId', async (req, res)=>{
   }
 });
 
-router.get('/custom/:search', async (req, res)=>{
+
+router.get('/custom', async (req, res)=>{
   try {
-    const { search } = req.params;
-    const { userId } = req.query;
-    const tutorialList = await tutorialInstance.customSearch(search, userId.toString());
+    const { userId, search } = req.query;
+    const tutorialList = await tutorialInstance.customSearch(search.toString(), userId.toString());
     
     res.json(tutorialList);
 

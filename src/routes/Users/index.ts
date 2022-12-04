@@ -2,18 +2,20 @@ import express from 'express';
 import { Users } from '@libs/Users';
 import { body, validationResult } from 'express-validator';
 import parser from 'ua-parser-js';
+import { jwtValidator } from '@server/middleware/jwtBearerValidator';
 
 const router = express.Router();
 const users = new Users();
 
-router.get('/getAll', async (_req, res) => {
+router.get('/getAll', jwtValidator, async (req, res) => {
   try {
-    const result = await users.getAllUsers();
+    const {page, items, search} = {page:"1", items:"10", search:"", ...req.query};
+    const result = await users.getAllUsers(Number(page), Number(items), search.toString());
     
     res.status(200).json(result);
-  } catch(ex) {
-    console.log("Error:", ex);
-    res.status(500).json({error:"Error al cargar los usuarios"});
+  } catch (ex) {
+    console.log('Error:', ex);
+    res.status(500).json({ error: 'Error al listar usuarios' });
   }
 });
 
@@ -23,7 +25,7 @@ router.post('/signin',
   body('password').isStrongPassword().withMessage('Contraseña insegura'),
   async (req, res) => {
     try {
-      const {name, email, password, roles } = req.body;
+      const { name, email, password, rol } = req.body;
 
       const errors = validationResult(req);
 
@@ -33,10 +35,10 @@ router.post('/signin',
 
       let result:object;
 
-      if (!roles || roles.length === 0) {
+      if (!rol || rol.length === 0) {
         result = await users.signin(name, email, password);
       } else {
-        result = await users.signin(name, email, password, roles);
+        result = await users.signin(name, email, password, rol);
       }
       return res.status(200).json({ msg: 'Usuario Creado Correctamente', result });
     } catch(error) {
@@ -92,9 +94,9 @@ router.get('/logout', async (_req, res) => {
 router.put('/update/:id', async (req, res)=> {
   try {
     const {id} = req.params;
-    const {username, email, avatar} = req.body;
+    const {username, email} = req.body;
     console.log(username, email);
-    const result = await users.updatePublic(id,username, email, avatar);    
+    const result = await users.updatePublic(id,username);    
 
     res.status(200).json({"msg":"Usuario Actualizado Correctamente", result});
   } catch(ex) {
@@ -103,26 +105,13 @@ router.put('/update/:id', async (req, res)=> {
   }
 });
 
-router.post('/changePassword', async (req, res)=> {
-     try {
-       const {email, oldPassword, newPassword} = req.body;
-  
-       await users.changePassword(email, oldPassword, newPassword);
-  
-       res.status(200).json({"msg":"Contraseña Actualizada"})
-  
-     } catch(error) {
-       console.log("Error:", error);
-       res.status(403).json({error: (error as Error).message});
-     }
-   });
-
-router.put('/delete/:id', async (req, res)=>{
+router.put('/updateStatus/:id/:status', jwtValidator, async (req, res)=>{
   try {
-    const {id} = req.params;
-    const idC = (/^\d*$/.test(id))?+id:id;
-    await users.updateStatus(idC as string);
-    res.status(200).json({"msg":"Usuario Eliminado"});
+    const { id, status } = req.params;
+    
+    await users.updateStatus(id as string, status);
+
+    res.status(200).json({"msg":"Registro Actualizado"});
   } catch(error) {
     res.status(500).json({error: (error as Error).message});
   }
@@ -224,6 +213,27 @@ async (req, res) => {
 
     await users.verifyRecoveryData(email, pin, newPassword);
     return res.status(200).json({ msg: 'Contraseña Actualizada' });
+  } catch (error) {
+    console.log('Error:', error);
+    return res.status(403).json({ error: (error as Error).message });
+  }
+});
+
+router.post('/verifyRecoveryPin',
+body('email').isEmail().withMessage('Correo inválido'),
+body('pin').isInt({min: 100000, max: 999999}).withMessage('Pin debe ser de 6 dígitos'),
+async (req, res) => {
+  try {
+    const { email, pin } = req.body;
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(500).json({ errors: errors.array() });
+    }
+
+    await users.verifyRecoveryPin(pin, email);
+    return res.status(200).json({ msg: 'Pin Correcto' });
   } catch (error) {
     console.log('Error:', error);
     return res.status(403).json({ error: (error as Error).message });

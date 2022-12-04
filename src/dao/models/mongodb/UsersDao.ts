@@ -7,9 +7,21 @@ export class UsersDao extends AbstractDao<IUser>{
     super('users', db );
   }
 
-  public async getAllUsers(){
+  public async getAllUsers(page:number = 1, itemsPerPage: number = 10, search:string){
     try {
-      return await this.findAll();
+      const total = await super.getCollection().countDocuments(search !== "" ? {title:new RegExp(search)} : {});
+      const totalPages = Math.ceil(total/itemsPerPage);
+      
+      const items = search !== "" 
+        ? await super.findAllRaw({$or:[{name:new RegExp(search, 'i')}, {email:new RegExp(search, 'i')}]}, {}, ((page-1) * itemsPerPage), itemsPerPage, {verificationPin:0, oldPasswords:0, failedAttempts:0, password:0, avatar:0, created:0})
+        : await super.aggregate([
+          { $project:{verificationPin:0, oldPasswords:0, failedAttempts:0, password:0, avatar:0, created:0}},
+          { $skip:((page-1) * itemsPerPage) },
+          { $limit: itemsPerPage }
+        ],{});
+
+      return { total, totalPages, page, itemsPerPage, items };
+
     } catch( ex: unknown) {
       console.log("UsersDao mongodb:", (ex as Error).message);
       throw ex;
