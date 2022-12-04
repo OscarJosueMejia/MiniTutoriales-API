@@ -82,11 +82,10 @@ router.get('/byCategory/:categoryId/:userId', async (req, res)=>{
 });
 
 
-router.get('/custom/:search', async (req, res)=>{
+router.get('/custom', async (req, res)=>{
   try {
-    const { search } = req.params;
-    const { userId } = req.query;
-    const tutorialList = await tutorialInstance.customSearch(search, userId.toString());
+    const { userId, search } = req.query;
+    const tutorialList = await tutorialInstance.customSearch(search.toString(), userId.toString());
     
     res.json(tutorialList);
 

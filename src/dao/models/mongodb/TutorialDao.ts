@@ -239,7 +239,6 @@ export class TutorialDao extends AbstractDao<ITutorial> {
   public async customSearch(search:string, identifier:string){
     try {
       // const result = await super.findByFilter({title:new RegExp(search)})
-
       const items = await super.aggregate(
         [
           {
@@ -264,6 +263,7 @@ export class TutorialDao extends AbstractDao<ITutorial> {
             },
           },
           authorInfoRelation,
+          { $limit: 10 },
         ],
         {},
       );
