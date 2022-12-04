@@ -14,6 +14,7 @@ import {
   FindOptions,
   AggregateOptions,
 } from 'mongodb';
+import { IUser } from '../entities/User';
 
 export abstract class AbstractDao<T> implements IDaoObject {
   public persistanceName: string;
@@ -32,6 +33,11 @@ export abstract class AbstractDao<T> implements IDaoObject {
   public async findAll(): Promise<WithId<T>[]> {
     return await this.collection.find({}).toArray();
   }
+
+  public async findAllRaw(filter:Filter<T>, options: FindOptions<IUser> = {}, skip:number, limit:number, projection?:any): Promise<Document[]> {
+    return this.collection.find(filter, options).skip(skip).limit(limit).project(projection).toArray();
+  }
+
   public async findByID(identifier: string): Promise<WithId<T>> {
     const _id = new ObjectId(identifier) as Filter<T>;
     return await this.collection.findOne({ _id });

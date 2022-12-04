@@ -17,8 +17,8 @@ export class Users {
       .catch((ex) => console.error(ex));
   }
 
-  public getAllUsers(page:number, items:number) {
-    return this.dao.getAllUsers(page, items);
+  public getAllUsers(page:number, items:number, search:string) {
+    return this.dao.getAllUsers(page, items, search);
   }
 
   public async signin(name:string, email:string, password:string, rol:string='public') {

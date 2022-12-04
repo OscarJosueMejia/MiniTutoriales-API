@@ -8,8 +8,8 @@ const users = new Users();
 
 router.get('/getAll', async (req, res) => {
   try {
-    const {page, items} = {page:"1", items:"10", ...req.query};
-    const result = await users.getAllUsers(Number(page), Number(items));
+    const {page, items, search} = {page:"1", items:"10", search:"", ...req.query};
+    const result = await users.getAllUsers(Number(page), Number(items), search.toString());
     
     res.status(200).json(result);
   } catch (ex) {
