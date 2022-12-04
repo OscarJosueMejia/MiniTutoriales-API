@@ -318,7 +318,7 @@ export class Users {
       console.log("Control de Cuentas: No se encontró el Token de Verificación", `${user.email}`)     
       throw new Error("Control de Cuentas: No se encontró el Token de Verificación");
     }
-    const {_id, verificationPin, email:emailUser, name, avatar} = user;
+    const {_id, verificationPin, email:emailUser, name, avatar, rol} = user;
     try {
         const decoded = verify(verificationPin);
         if ( !checkPassword(pin.toString(), decoded['verificationPin']) ) {
@@ -326,7 +326,7 @@ export class Users {
         }
         await this.dao.updateUser({_id, status:"ACT", verificationPin:""});
         
-        const returnUser = {name, email:emailUser, avatar, _id};
+        const returnUser = { name, email: emailUser, avatar, _id, rol };
         return {...returnUser, token: sign(returnUser)}
         
     } catch (error) {
